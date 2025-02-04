@@ -61,8 +61,8 @@ import {
 // Images
 import favicon from "/assets/images/favicon.png";
 import appleIcon from "/assets/images/apple-icon.png";
-import brandWhite from "/assets/images/logo-ct.png";
-import brandDark from "/assets/images/logo-ct-dark.png";
+import brandWhite from "/assets/images/logos/elare-ball-light.png";
+import brandDark from "/assets/images/logos/elare-ball-dark.png";
 
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createCache({ key: "css", prepend: true });
@@ -161,7 +161,7 @@ function Main({ Component, pageProps }) {
             <Sidenav
               color={sidenavColor}
               brand={brandIcon}
-              brandName="Material Dashboard PRO"
+              brandName="Kangaroo Court"
               routes={routes}
               onMouseEnter={handleOnMouseEnter}
               onMouseLeave={handleOnMouseLeave}
@@ -182,7 +182,7 @@ function Main({ Component, pageProps }) {
           <Sidenav
             color={sidenavColor}
             brand={brandIcon}
-            brandName="Material Dashboard PRO"
+            brandName="Kangaroo Court"
             routes={routes}
             onMouseEnter={handleOnMouseEnter}
             onMouseLeave={handleOnMouseLeave}

@@ -41,14 +41,15 @@ import MDAvatar from "/components/MDAvatar";
 import Icon from "@mui/material/Icon";
 
 // Images
-import profilePicture from "/assets/images/team-3.jpg";
+import profilePicture from "/assets/images/logos/elare-square.png";
 
 const routes = [
+  { type: "title", title: "Scoreboard", key: "title-scoreboard" },
   {
     type: "collapse",
     name: "Elare Pickleball",
     key: "brooklyn-alice",
-    icon: <MDAvatar src={profilePicture.src} alt="Brooklyn Alice" size="sm" />,
+    icon: <MDAvatar src={profilePicture.src} alt="Elare Pickleball" size="sm" />,
     noCollapse: true,
     collapse: [
         {
@@ -63,7 +64,6 @@ const routes = [
         },
       ],
     },
-  { type: "divider", key: "divider-0" }
   // {
   //   type: "collapse",
   //   name: "Dashboards",
@@ -284,83 +284,21 @@ const routes = [
   //     },
   //   ],
   // },
-  // { type: "divider", key: "divider-1" },
-  // { type: "title", title: "Docs", key: "title-docs" },
-  // {
-  //   type: "collapse",
-  //   name: "Basic",
-  //   key: "basic",
-  //   icon: <Icon fontSize="medium">upcoming</Icon>,
-  //   collapse: [
-  //     {
-  //       name: "Getting Started",
-  //       key: "getting-started",
-  //       collapse: [
-  //         {
-  //           name: "Overview",
-  //           key: "overview",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/overview/material-dashboard/",
-  //         },
-  //         {
-  //           name: "License",
-  //           key: "license",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/license/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Quick Start",
-  //           key: "quick-start",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/quick-start/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Build Tools",
-  //           key: "build-tools",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/build-tools/material-dashboard/",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       name: "Foundation",
-  //       key: "foundation",
-  //       collapse: [
-  //         {
-  //           name: "Colors",
-  //           key: "colors",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/colors/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Grid",
-  //           key: "grid",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/grid/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Typography",
-  //           key: "base-typography",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/base-typography/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Borders",
-  //           key: "borders",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/borders/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Box Shadows",
-  //           key: "box-shadows",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/box-shadows/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Functions",
-  //           key: "functions",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/functions/material-dashboard/",
-  //         },
-  //         {
-  //           name: "Routing System",
-  //           key: "routing-system",
-  //           href: "https://www.creative-tim.com/learning-lab/nextjs/routing-system/material-dashboard/",
-  //         },
-  //       ],
-  //     },
-  //   ],
-  // },
+  { type: "divider", key: "divider-1" },
+  { type: "title", title: "Docs", key: "title-docs" },
+  {
+    type: "collapse",
+    name: "Basic",
+    key: "basic",
+    icon: <Icon fontSize="medium">upcoming</Icon>,
+    collapse: [
+      {
+        name: "How it Works",
+        key: "how-it-works",
+        href: "https://www.loom.com/share/ff3ea72ea031497ea5609b771951a0f6"
+      },
+    ],
+  }
   // {
   //   type: "collapse",
   //   name: "Components",
