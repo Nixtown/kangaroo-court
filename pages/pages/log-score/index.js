@@ -19,8 +19,8 @@ import DashboardLayout from "/examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 
 // Layout components
-import BaseLayout from "/pagesComponents/pages/account/components/BaseLayout";
-import BasicEventInformation from "/pagesComponents/pages/basic-event-information";
+import BasicEventInformation from "/pagesComponents/pages/score-logging/basic-event-information";
+import TeamScore from "/pagesComponents/pages/score-logging/team-score";
 
 function LogScore() {
   
@@ -33,6 +33,13 @@ function LogScore() {
             <BasicEventInformation />
           </Grid>
         </Grid>
+      <MDBox mt={3}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={3}>
+            <TeamScore />
+          </Grid>
+        </Grid>
+      </MDBox>  
       </MDBox>
     </DashboardLayout>
   );

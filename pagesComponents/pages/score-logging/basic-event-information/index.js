@@ -34,9 +34,9 @@ const BasicEventInformation = () => {
      // Fetch Data from SupaBase
      async function fetchData() {
       const { data, error } = await supabase
-        .from("log_score")
+        .from("scoreboard")
         .select("*")
-        .eq("id", 2)
+        .eq("id", 1)
         .single(); // Assumes there is only one row with id=2
 
       if (error) {
@@ -81,15 +81,16 @@ const BasicEventInformation = () => {
     };
 
     // Insert data into the "log_score" table
-    const { error } = await supabase.from('log_score').upsert([
-      {
-        id: 2,
+    const { error } = await supabase
+    .from('scoreboard')
+    .update({
         tournament_name: tournamentName,
         match_title: matchTitle,
         team_a: teamA,
         team_b: teamB,
-      },
-    ]);
+    })
+    .eq('id', 1);
+ 
 
     if (error) {
       console.error("Error saving to Supabase:", error);

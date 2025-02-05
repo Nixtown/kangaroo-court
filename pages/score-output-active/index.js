@@ -25,6 +25,8 @@ export default function ScoreOutputActive() {
   const [matchTitle, setMatchTitle] = useState("");
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
+  const [teamAScoreGame1, setTeamAScoreGame1] = useState("");
+  const [teamBScoreGame1, setTeamBScoreGame1] = useState("");
 
   
   useEffect(() => {
@@ -32,9 +34,9 @@ export default function ScoreOutputActive() {
       async function fetchData() {
 
         const { data, error } = await supabase
-          .from("log_score")
+          .from("scoreboard")
           .select("*")
-          .eq("id", 2)
+          .eq("id", 1)
           .single(); // Assumes there is only one row with id=2
 
         if (error) {
@@ -43,7 +45,9 @@ export default function ScoreOutputActive() {
           setTournamentName(data.tournament_name || "");
           setMatchTitle(data.match_title || "");
           setTeamA(data.team_a || "");
-          setTeamB(data.team_b || "");        
+          setTeamB(data.team_b || "");
+          setTeamAScoreGame1(data.team_a_score_game1 || "");
+          setTeamBScoreGame1(data.team_b_score_game1 || "");      
         }
         
       }
@@ -106,9 +110,9 @@ export default function ScoreOutputActive() {
               </MDTypography>
             </Grid>
             {/* (A) Team Name */}
-            <Grid item xs={12}>
+            <Grid item xs={6}>
               <MDTypography variant="subtitle2" color="text">
-                (A) Team Name:
+                Team A:
               </MDTypography>
               <MDTypography variant="body1">
                 {payload?.teamA
@@ -117,14 +121,25 @@ export default function ScoreOutputActive() {
               </MDTypography>
             </Grid>
             {/* (B) Team Name */}
-            <Grid item xs={12}>
+            <Grid item xs={6}>
               <MDTypography variant="subtitle2" color="text">
-                (B) Team Name:
+                Team B:
               </MDTypography>
               <MDTypography variant="body1">
                 {payload?.teamB
                   ? payload.teamB
                   : teamB}
+              </MDTypography>
+            </Grid>
+            <Grid item xs={12}>
+              <MDTypography variant="subtitle2" color="text">
+                Score
+              </MDTypography>
+              <MDTypography variant="body1">
+              {payload?.teamAScoreGame1 && payload?.teamBScoreGame1
+              ? `${payload.teamAScoreGame1} - ${payload.teamBScoreGame1}`
+              : `${teamAScoreGame1} - ${teamBScoreGame1}`}
+
               </MDTypography>
             </Grid>
           </Grid>
