@@ -106,9 +106,9 @@ const TeamScore = ({ gameNumber = 1 }) => {
 
 
   return (
-    <Card id="score-loggin" sx={{ overflow: "visible" }}>
-    <MDBox p={3}>
-        <MDTypography variant="h5">
+    <Card id="score-loggin" sx={{ overflow: "visible" }} variant="outlined">
+    <MDBox px={3} pb={2} pt={2} >
+        <MDTypography variant="body2">
         {"Game: " + gameNumber}
         </MDTypography>
     </MDBox>
@@ -118,7 +118,7 @@ const TeamScore = ({ gameNumber = 1 }) => {
         px={3}
     >
     <Grid container spacing={3}>
-        <Grid item xs={6} sm={6}>
+        <Grid item xs={12} sm={12}>
             <MDInput
             fullWidth
             label="A"
@@ -132,7 +132,7 @@ const TeamScore = ({ gameNumber = 1 }) => {
             inputProps={{ type: "number" }}
             />
         </Grid>
-        <Grid item xs={6} sm={6}>
+        <Grid item xs={12} sm={12}>
             <MDInput
             fullWidth
             label="B"

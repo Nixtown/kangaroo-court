@@ -85,25 +85,25 @@ export default function ScoreOutputActive() {
     <Grid item xs={12} sm={10} md={8}>
       <Card>
         <MDBox p={3}>
-          <MDTypography variant="h5" textAlign="center" mb={3}>
+          <MDTypography variant="h4" textAlign="center" mb={3}>
             Elare Pickleball Broadcast
           </MDTypography>
           <Grid container spacing={2}>
             {/* Tournament Name */}
-            <Grid item xs={12}>
-              <MDTypography variant="subtitle2" color="text">
+            <Grid item xs={6}>
+              <MDTypography variant="h6" color="text">
                 Tournament Name:
               </MDTypography>
-              <MDTypography variant="body1">
+              <MDTypography variant="body2">
                 {payload?.tournamentName ? payload.tournamentName : tournamentName}
               </MDTypography>
             </Grid>
             {/* Match Title */}
-            <Grid item xs={12}>
-              <MDTypography variant="subtitle2" color="text">
+            <Grid item xs={6}>
+              <MDTypography variant="h6" color="text">
                 Match Title:
               </MDTypography>
-              <MDTypography variant="body1">
+              <MDTypography variant="body2">
                 {payload?.matchTitle
                   ? payload.matchTitle
                   : matchTitle}
@@ -111,10 +111,10 @@ export default function ScoreOutputActive() {
             </Grid>
             {/* (A) Team Name */}
             <Grid item xs={6}>
-              <MDTypography variant="subtitle2" color="text">
+              <MDTypography variant="h6" color="text">
                 Team A:
               </MDTypography>
-              <MDTypography variant="body1">
+              <MDTypography variant="body2">
                 {payload?.teamA
                   ? payload.teamA
                   : teamA}
@@ -122,20 +122,20 @@ export default function ScoreOutputActive() {
             </Grid>
             {/* (B) Team Name */}
             <Grid item xs={6}>
-              <MDTypography variant="subtitle2" color="text">
+              <MDTypography variant="h6" color="text">
                 Team B:
               </MDTypography>
-              <MDTypography variant="body1">
+              <MDTypography variant="body2">
                 {payload?.teamB
                   ? payload.teamB
                   : teamB}
               </MDTypography>
             </Grid>
             <Grid item xs={12}>
-              <MDTypography variant="subtitle2" color="text">
-                Score
+              <MDTypography variant="h6" color="text">
+                Current Score
               </MDTypography>
-              <MDTypography variant="body1">
+              <MDTypography variant="body2">
               {payload?.teamAScoreGame1 && payload?.teamBScoreGame1
               ? `${payload.teamAScoreGame1} - ${payload.teamBScoreGame1}`
               : `${teamAScoreGame1} - ${teamBScoreGame1}`}
