@@ -29,14 +29,26 @@ function LogScore() {
       <DashboardNavbar />
       <MDBox mb={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={8}>
+          <Grid item xs={12} lg={6}>
             <BasicEventInformation />
           </Grid>
         </Grid>
       <MDBox mt={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={3}>
-            <TeamScore />
+          <Grid item xs={12} lg={2.2}>
+            <TeamScore gameNumber={1}/>
+          </Grid>
+          <Grid item xs={12} lg={2.2}>
+            <TeamScore gameNumber={2}/>
+          </Grid>
+          <Grid item xs={12} lg={2.2}>
+            <TeamScore gameNumber={3}/>
+          </Grid>
+          <Grid item xs={12} lg={2.2}>
+            <TeamScore gameNumber={4}/>
+          </Grid>
+          <Grid item xs={12} lg={2.2}>
+            <TeamScore gameNumber={5}/>
           </Grid>
         </Grid>
       </MDBox>  

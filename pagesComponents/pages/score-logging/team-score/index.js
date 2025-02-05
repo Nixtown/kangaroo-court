@@ -20,11 +20,11 @@ import MDTypography from "/components/MDTypography";
 import MDInput from "/components/MDInput";
 import { supabase } from '/lib/supabaseClient';
 
-const TeamScore = () => {
+const TeamScore = ({ gameNumber = 1 }) => {
   // State to store the Pusher channel reference
   const [channel, setChannel] = useState(null);
-  const [teamAScoreGame1, setTeamAScoreGame1] = useState("");
-  const [teamBScoreGame1, setTeamBScoreGame1] = useState("");
+  const [teamAScore, setTeamAScore] = useState("");
+  const [teamBScore, setTeamBScore] = useState("");
 
   useEffect(() => {
 
@@ -39,8 +39,8 @@ const TeamScore = () => {
     if (error) {
       console.error("Error fetching log score:", error);
     } else if (data) {
-      setTeamAScoreGame1(data.team_a_score_game1 || "");
-      setTeamBScoreGame1(data.team_b_score_game1 || "");
+        setTeamAScore(data[`team_a_score_game${gameNumber}`] || "0");
+        setTeamBScore(data[`team_b_score_game${gameNumber}`] || "0");
     }
   }
   fetchData();
@@ -71,8 +71,8 @@ const TeamScore = () => {
     const numericTeamBScore = newTeamBScore === "" ? 0 : parseInt(newTeamBScore, 10);
   
     const data = {
-      teamAScoreGame1: numericTeamAScore,
-      teamBScoreGame1: numericTeamBScore,
+      teamAScore: numericTeamAScore,
+      teamBScore: numericTeamBScore,
     };
     console.log("Handler is Running", data);
   
@@ -80,8 +80,8 @@ const TeamScore = () => {
     const { error } = await supabase
     .from('scoreboard')
     .update({
-      team_a_score_game1: numericTeamAScore,
-      team_b_score_game1: numericTeamBScore,
+        [`team_a_score_game${gameNumber}`]: numericTeamAScore,
+        [`team_b_score_game${gameNumber}`]: numericTeamBScore,
     })
     .eq('id', 1);
   
@@ -109,7 +109,7 @@ const TeamScore = () => {
     <Card id="score-loggin" sx={{ overflow: "visible" }}>
     <MDBox p={3}>
         <MDTypography variant="h5">
-        Game 1
+        {"Game: " + gameNumber}
         </MDTypography>
     </MDBox>
     <MDBox
@@ -121,13 +121,13 @@ const TeamScore = () => {
         <Grid item xs={6} sm={6}>
             <MDInput
             fullWidth
-            label="Team A"
-            value={teamAScoreGame1 ? teamAScoreGame1 : "0"}
+            label="A"
+            value={teamAScore ? teamAScore : "0"}
             onChange={(e) => {
                 const newValue = e.target.value;
-                setTeamAScoreGame1(newValue);
+                setTeamAScore(newValue);
                 // Call the handler immediately with the new value and the current value of Team B's score
-                handleUpdate(newValue, teamBScoreGame1);
+                handleUpdate(newValue, teamBScore);
             }}
             inputProps={{ type: "number" }}
             />
@@ -135,13 +135,13 @@ const TeamScore = () => {
         <Grid item xs={6} sm={6}>
             <MDInput
             fullWidth
-            label="Team B"
-            value={teamBScoreGame1 ? teamBScoreGame1 : "0"}
+            label="B"
+            value={teamBScore ? teamBScore : "0"}
             onChange={(e) => {
                 const newValue = e.target.value;
-                setTeamBScoreGame1(newValue);
+                setTeamBScore(newValue);
                 // Call the handler immediately with the new value and the current value of Team B's score
-                handleUpdate(teamAScoreGame1, newValue);
+                handleUpdate(teamAScore, newValue);
             }}
             inputProps={{ type: "number" }}
             />
