@@ -15,19 +15,18 @@ import Pusher from "pusher-js";
 // NextJS Material Dashboard 2 PRO components
 import MDBox from "/components/MDBox";
 import Grid from "@mui/material/Grid";
-import Card from "@mui/material/Card";
-import MDTypography from "/components/MDTypography";
-import MDInput from "/components/MDInput";
-import MDButton from "/components/MDButton";
+import DashboardLayout from "/examples/LayoutContainers/DashboardLayout";
+import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 
 // Layout components
 import BaseLayout from "/pagesComponents/pages/account/components/BaseLayout";
-import BasicEventInformation from "/pagesComponents/pages/log-score";
+import BasicEventInformation from "/pagesComponents/pages/basic-event-information";
 
 function LogScore() {
   
   return (
-    <BaseLayout>
+    <DashboardLayout>
+      <DashboardNavbar />
       <MDBox mb={3}>
         <Grid container spacing={3}>
           <Grid item xs={12} lg={8}>
@@ -35,7 +34,7 @@ function LogScore() {
           </Grid>
         </Grid>
       </MDBox>
-    </BaseLayout>
+    </DashboardLayout>
   );
 }
 
