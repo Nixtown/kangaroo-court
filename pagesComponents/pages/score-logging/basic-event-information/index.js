@@ -112,7 +112,7 @@ const BasicEventInformation = () => {
 
 
   return (
-    <Card id="basic-event-info" sx={{ overflow: "visible" }}>
+    <Card lg={12} id="basic-event-info" sx={{ overflow: "visible" }}>
     <MDBox p={3}>
         <MDTypography variant="h5">
         Basic Event Information

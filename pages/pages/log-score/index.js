@@ -10,7 +10,7 @@ Coded by www.creative-tim.com
 */
 
 import { useState, useEffect } from "react";
-import Pusher from "pusher-js";
+import { supabase } from '/lib/supabaseClient';
 
 // NextJS Material Dashboard 2 PRO components
 import MDBox from "/components/MDBox";
@@ -25,8 +25,52 @@ import MDButton from "/components/MDButton";
 import BasicEventInformation from "/pagesComponents/pages/score-logging/basic-event-information";
 import TeamScore from "/pagesComponents/pages/score-logging/team-score";
 
-function LogScore() {
-  
+const LogScore = () => {
+
+ // State for the number of games to display (the gameCount)
+ const [currentGame, setCurrentGame] = useState(1);
+
+   // Create an array of game numbers based on gameCount.
+  // If gameCount = 1 then [1]; if gameCount = 2 then [1,2], etc.
+  const gameNumbers = Array.from({ length: currentGame }, (_, i) => i + 1);
+
+  useEffect(() => {
+    async function fetchGame() {
+      const { data, error } = await supabase
+        .from("scoreboard") 
+        .select("current_game")
+        .eq("id", 1)
+        .single(); // Assuming only one active scoreboard
+
+      if (error) {
+        console.error("Error fetching current game:", error);
+      } else {
+        setCurrentGame(data.current_game || 1);
+      }
+    }
+    fetchGame();
+  }, []);
+
+   // Function to update the current game in Supabase
+   const updateCurrentGame = async (newGameNumber) => {
+
+    setCurrentGame(newGameNumber); // Update state immediately for UI responsiveness
+
+    const { error } = await supabase
+      .from('scoreboard')
+      .update({ current_game: newGameNumber })
+      .eq('id', 1);
+
+    if (error) {
+      console.error("Error updating current game:", error);
+    } else {
+      console.log("Current game updated to:", newGameNumber);
+    }
+  };
+
+
+
+
   return (
     <DashboardLayout>
       <DashboardNavbar />
@@ -39,7 +83,7 @@ function LogScore() {
             <Card id="incriment-games" sx={{ overflow: "visible" }}>
               <MDBox p={3}>
                   <MDTypography variant="h5">
-                    Current Game:
+                    {"Current Game: " + currentGame}
                   </MDTypography>
               </MDBox>
               <MDBox p={3}>
@@ -49,7 +93,7 @@ function LogScore() {
                               variant="gradient"
                               color="dark"
                               fullWidth
-                              type="submit"
+                              onClick={() => updateCurrentGame(currentGame > 1 ? currentGame - 1 : currentGame)}
                               >
                               Previous
                     </MDButton>
@@ -59,7 +103,7 @@ function LogScore() {
                               variant="gradient"
                               color="dark"
                               fullWidth
-                              type="submit"
+                              onClick={() => updateCurrentGame(currentGame + 1)}
                               >
                               Next
                     </MDButton>
@@ -68,26 +112,11 @@ function LogScore() {
               </MDBox>
             </Card>
           </Grid>
-          <MDBox p={3}>
-            <Grid container rowSpacing={3} columnSpacing={2}>
-              <Grid item xs={12} lg={2.4}>
-                <TeamScore gameNumber={1}/>
-              </Grid>
-              <Grid item xs={12} lg={2.4}>
-                <TeamScore gameNumber={2}/>
-              </Grid>
-              <Grid item xs={12} lg={2.4}>
-                <TeamScore gameNumber={2}/>
-              </Grid>
-              <Grid item xs={12} lg={2.4}>
-                <TeamScore gameNumber={4}/>
-              </Grid>
-              <Grid item xs={12} lg={2.4}>
-                <TeamScore gameNumber={5}/>
-              </Grid>
+          {gameNumbers.map((gameNumber) => (
+            <Grid item xs={12} lg={2.4} key={gameNumber}>
+              <TeamScore gameNumber={gameNumber} />
             </Grid>
-          </MDBox>  
-          
+          ))}
         </Grid>
       </MDBox>
     </DashboardLayout>

@@ -10,7 +10,6 @@ Coded by www.creative-tim.com
 */
 
 import { useEffect, useState } from "react";
-import Pusher from "pusher-js";
 import { supabase } from '/lib/supabaseClient';
 
 // NextJS Material Dashboard 2 PRO components
@@ -20,63 +19,49 @@ import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 
 export default function ScoreOutputActive() {
-  const [payload, setPayload] = useState(null);
-  const [tournamentName, setTournamentName] = useState("");
-  const [matchTitle, setMatchTitle] = useState("");
-  const [teamA, setTeamA] = useState("");
-  const [teamB, setTeamB] = useState("");
-  const [teamAScoreGame1, setTeamAScoreGame1] = useState("");
-  const [teamBScoreGame1, setTeamBScoreGame1] = useState("");
+  const [scoreData, setScoreData] = useState(null);
 
-  
   useEffect(() => {
-      // Fetch Data from SupaBase
-      async function fetchData() {
 
-        const { data, error } = await supabase
-          .from("scoreboard")
-          .select("*")
-          .eq("id", 1)
-          .single(); // Assumes there is only one row with id=2
-
-        if (error) {
-          console.error("Error fetching log score:", error);
-        } else if (data) {
-          setTournamentName(data.tournament_name || "");
-          setMatchTitle(data.match_title || "");
-          setTeamA(data.team_a || "");
-          setTeamB(data.team_b || "");
-          setTeamAScoreGame1(data.team_a_score_game1 || "");
-          setTeamBScoreGame1(data.team_b_score_game1 || "");      
-        }
-        
+    // Fetch initial data
+    async function fetchInitialData() {
+      const { data, error } = await supabase
+        .from("scoreboard")
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (error) {
+        console.error("Error fetching initial data:", error);
+      } else {
+        setScoreData(data);
       }
-      fetchData();
+    }
+    fetchInitialData();
 
-    // Enable logging for debugging (optional)
-    Pusher.logToConsole = true;
+    // Create a channel and subscribe to realtime changes
+    const subscription = supabase
+    .channel('scoreboard-channel')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'scoreboard',
+        filter: 'id=eq.1',
+      },
+      (payload) => {
+        console.log("Realtime update received:", payload);
+        setScoreData(payload.new);
+      }
+    )
+    .subscribe();
 
-    // Initialize Pusher with public environment variables
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_KEY, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER,
-      authEndpoint: "/api/pusher/auth", // Tell Pusher to use your API route for authentication
-    });
-
-    // Subscribe to the "private-log-score" channel
-    const channel = pusher.subscribe("private-log-score");
-
-    // Listen for the "client-log-score-update" event
-    channel.bind("client-log-score-update", (data) => {
-      console.log("Received Pusher event:", data);
-      setPayload(data);
-    });
-
-    // Cleanup on component unmount
+    // Cleanup the subscription when the component unmounts
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
-      pusher.disconnect();
+      supabase.removeChannel(subscription);
     };
+    
+
   }, []);
 
   return (
@@ -95,7 +80,7 @@ export default function ScoreOutputActive() {
                 Tournament Name:
               </MDTypography>
               <MDTypography variant="body2">
-                {payload?.tournamentName ? payload.tournamentName : tournamentName}
+              {scoreData?.tournament_name ?? "Loading..."}
               </MDTypography>
             </Grid>
             {/* Match Title */}
@@ -104,9 +89,7 @@ export default function ScoreOutputActive() {
                 Match Title:
               </MDTypography>
               <MDTypography variant="body2">
-                {payload?.matchTitle
-                  ? payload.matchTitle
-                  : matchTitle}
+              {scoreData?.match_title ?? "Loading..."}
               </MDTypography>
             </Grid>
             {/* (A) Team Name */}
@@ -115,30 +98,28 @@ export default function ScoreOutputActive() {
                 Team A:
               </MDTypography>
               <MDTypography variant="body2">
-                {payload?.teamA
-                  ? payload.teamA
-                  : teamA}
+              {scoreData?.team_a ?? "Loading..."}
               </MDTypography>
             </Grid>
             {/* (B) Team Name */}
             <Grid item xs={6}>
               <MDTypography variant="h6" color="text">
-                Team B:
+              Team B:
               </MDTypography>
               <MDTypography variant="body2">
-                {payload?.teamB
-                  ? payload.teamB
-                  : teamB}
+              {scoreData?.team_b ?? "Loading..."}
               </MDTypography>
             </Grid>
             <Grid item xs={12}>
               <MDTypography variant="h6" color="text">
-                Current Score
+                {scoreData?.current_game ? ` Current Game - ${scoreData.current_game}` : "...Loading"}
               </MDTypography>
               <MDTypography variant="body2">
-              {payload?.teamAScoreGame1 && payload?.teamBScoreGame1
-              ? `${payload.teamAScoreGame1} - ${payload.teamBScoreGame1}`
-              : `${teamAScoreGame1} - ${teamBScoreGame1}`}
+              {scoreData &&
+              scoreData[`team_a_score_game${scoreData.current_game}`] !== undefined &&
+              scoreData[`team_b_score_game${scoreData.current_game}`] !== undefined
+              ? `${scoreData[`team_a_score_game${scoreData.current_game}`]} - ${scoreData[`team_b_score_game${scoreData.current_game}`]}`
+              : "Loading..."}
 
               </MDTypography>
             </Grid>
