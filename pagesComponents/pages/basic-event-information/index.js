@@ -19,6 +19,7 @@ import Card from "@mui/material/Card";
 import MDTypography from "/components/MDTypography";
 import MDInput from "/components/MDInput";
 import MDButton from "/components/MDButton";
+import { supabase } from '/lib/supabaseClient';
 
 const BasicEventInformation = () => {
   // Local state for form fields
@@ -30,6 +31,25 @@ const BasicEventInformation = () => {
   const [channel, setChannel] = useState(null);
 
   useEffect(() => {
+     // Fetch Data from SupaBase
+     async function fetchData() {
+      const { data, error } = await supabase
+        .from("log_score")
+        .select("*")
+        .eq("id", 2)
+        .single(); // Assumes there is only one row with id=2
+
+      if (error) {
+        console.error("Error fetching log score:", error);
+      } else if (data) {
+        setTournamentName(data.tournament_name || "");
+        setMatchTitle(data.match_title || "");
+        setTeamA(data.team_a || "");
+        setTeamB(data.team_b || "");
+      }
+    }
+    fetchData();
+
     // Initialize Pusher with the public environment variables
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_KEY, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER,
@@ -46,10 +66,11 @@ const BasicEventInformation = () => {
       pusherChannel.unsubscribe();
       pusher.disconnect();
     };
+
   }, []);
 
   // Handler to trigger the Pusher event on form submission
-  const handleUpdate = (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
 
     const data = {
@@ -59,6 +80,25 @@ const BasicEventInformation = () => {
       teamB,
     };
 
+    // Insert data into the "log_score" table
+    const { error } = await supabase.from('log_score').upsert([
+      {
+        id: 2,
+        tournament_name: tournamentName,
+        match_title: matchTitle,
+        team_a: teamA,
+        team_b: teamB,
+      },
+    ]);
+
+    if (error) {
+      console.error("Error saving to Supabase:", error);
+    } else {
+      console.log("Data saved successfully:", data);
+      // Optionally, trigger your Pusher event here as well.
+    }
+
+
     // Trigger Pusher event if channel is available
     if (channel) {
       channel.trigger("client-log-score-update", data);
@@ -67,6 +107,8 @@ const BasicEventInformation = () => {
       console.error("Pusher channel is not available");
     }
   };
+
+
 
   return (
     <Card id="basic-event-info" sx={{ overflow: "visible" }}>

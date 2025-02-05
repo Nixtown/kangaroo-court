@@ -44,7 +44,7 @@ import Icon from "@mui/material/Icon";
 import profilePicture from "/assets/images/logos/elare-square.png";
 
 const routes = [
-  { type: "title", title: "Scoreboard", key: "title-scoreboard" },
+  { type: "title", title: "Score", key: "title-scoreboard" },
   {
     type: "collapse",
     name: "Elare Pickleball",

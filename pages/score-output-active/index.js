@@ -11,6 +11,7 @@ Coded by www.creative-tim.com
 
 import { useEffect, useState } from "react";
 import Pusher from "pusher-js";
+import { supabase } from '/lib/supabaseClient';
 
 // NextJS Material Dashboard 2 PRO components
 import MDBox from "/components/MDBox";
@@ -20,8 +21,34 @@ import Card from "@mui/material/Card";
 
 export default function ScoreOutputActive() {
   const [payload, setPayload] = useState(null);
+  const [tournamentName, setTournamentName] = useState("");
+  const [matchTitle, setMatchTitle] = useState("");
+  const [teamA, setTeamA] = useState("");
+  const [teamB, setTeamB] = useState("");
 
+  
   useEffect(() => {
+      // Fetch Data from SupaBase
+      async function fetchData() {
+
+        const { data, error } = await supabase
+          .from("log_score")
+          .select("*")
+          .eq("id", 2)
+          .single(); // Assumes there is only one row with id=2
+
+        if (error) {
+          console.error("Error fetching log score:", error);
+        } else if (data) {
+          setTournamentName(data.tournament_name || "");
+          setMatchTitle(data.match_title || "");
+          setTeamA(data.team_a || "");
+          setTeamB(data.team_b || "");        
+        }
+        
+      }
+      fetchData();
+
     // Enable logging for debugging (optional)
     Pusher.logToConsole = true;
 
@@ -64,9 +91,7 @@ export default function ScoreOutputActive() {
                 Tournament Name:
               </MDTypography>
               <MDTypography variant="body1">
-                {payload && payload.tournamentName
-                  ? payload.tournamentName
-                  : "No tournament name provided"}
+                {payload?.tournamentName ? payload.tournamentName : tournamentName}
               </MDTypography>
             </Grid>
             {/* Match Title */}
@@ -75,9 +100,9 @@ export default function ScoreOutputActive() {
                 Match Title:
               </MDTypography>
               <MDTypography variant="body1">
-                {payload && payload.matchTitle
+                {payload?.matchTitle
                   ? payload.matchTitle
-                  : "No match title provided"}
+                  : matchTitle}
               </MDTypography>
             </Grid>
             {/* (A) Team Name */}
@@ -86,9 +111,9 @@ export default function ScoreOutputActive() {
                 (A) Team Name:
               </MDTypography>
               <MDTypography variant="body1">
-                {payload && payload.teamA
+                {payload?.teamA
                   ? payload.teamA
-                  : "No team A provided"}
+                  : teamA}
               </MDTypography>
             </Grid>
             {/* (B) Team Name */}
@@ -97,9 +122,9 @@ export default function ScoreOutputActive() {
                 (B) Team Name:
               </MDTypography>
               <MDTypography variant="body1">
-                {payload && payload.teamB
+                {payload?.teamB
                   ? payload.teamB
-                  : "No team B provided"}
+                  : teamB}
               </MDTypography>
             </Grid>
           </Grid>
