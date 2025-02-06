@@ -10,7 +10,6 @@ Coded by www.creative-tim.com
 */
 
 import { useState, useEffect } from "react";
-import Pusher from "pusher-js";
 
 // NextJS Material Dashboard 2 PRO components
 import MDBox from "/components/MDBox";
@@ -27,8 +26,6 @@ const BasicEventInformation = () => {
   const [matchTitle, setMatchTitle] = useState("");
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
-  // State to store the Pusher channel reference
-  const [channel, setChannel] = useState(null);
 
   useEffect(() => {
      // Fetch Data from SupaBase
@@ -50,22 +47,6 @@ const BasicEventInformation = () => {
     }
     fetchData();
 
-    // Initialize Pusher with the public environment variables
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_APP_KEY, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_APP_CLUSTER,
-      authEndpoint: "/api/pusher/auth", // Make sure your API route is set up correctly
-    });
-    console.log("Pusher Key (Client Side):", process.env.NEXT_PUBLIC_PUSHER_APP_KEY);
-
-    // Subscribe to a private channel for log-score events
-    const pusherChannel = pusher.subscribe("private-log-score");
-    setChannel(pusherChannel);
-
-    // Cleanup on component unmount
-    return () => {
-      pusherChannel.unsubscribe();
-      pusher.disconnect();
-    };
 
   }, []);
 
@@ -73,12 +54,6 @@ const BasicEventInformation = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
 
-    const data = {
-      tournamentName,
-      matchTitle,
-      teamA,
-      teamB,
-    };
 
     // Insert data into the "log_score" table
     const { error } = await supabase
@@ -95,17 +70,7 @@ const BasicEventInformation = () => {
     if (error) {
       console.error("Error saving to Supabase:", error);
     } else {
-      console.log("Data saved successfully:", data);
-      // Optionally, trigger your Pusher event here as well.
-    }
-
-
-    // Trigger Pusher event if channel is available
-    if (channel) {
-      channel.trigger("client-log-score-update", data);
-      console.log("Update sent via Pusher:", data);
-    } else {
-      console.error("Pusher channel is not available");
+      console.log("Data saved successfully:");
     }
   };
 
@@ -176,5 +141,4 @@ const BasicEventInformation = () => {
     </Card>
   );
 };
-
 export default BasicEventInformation;

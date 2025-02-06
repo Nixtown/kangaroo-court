@@ -50,7 +50,7 @@ export default function ScoreOutputActive() {
         filter: 'id=eq.1',
       },
       (payload) => {
-        console.log("Realtime update received:", payload);
+        console.log("Realtime update received on Output Page:", payload);
         setScoreData(payload.new);
       }
     )

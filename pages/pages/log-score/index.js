@@ -23,16 +23,16 @@ import MDButton from "/components/MDButton";
 
 // Layout components
 import BasicEventInformation from "/pagesComponents/pages/score-logging/basic-event-information";
-import TeamScore from "/pagesComponents/pages/score-logging/team-score";
+import RallyController from "/pagesComponents/pages/score-logging/rally-controller";
 
 const LogScore = () => {
 
  // State for the number of games to display (the gameCount)
- const [currentGame, setCurrentGame] = useState(1);
+ const [scoreData, setScoreData] = useState(null);
 
    // Create an array of game numbers based on gameCount.
   // If gameCount = 1 then [1]; if gameCount = 2 then [1,2], etc.
-  const gameNumbers = Array.from({ length: currentGame }, (_, i) => i + 1);
+  const gameNumbers = Array.from({ length: scoreData?.current_game ?? 1 }, (_, i) => i + 1);
 
   useEffect(() => {
     async function fetchGame() {
@@ -45,78 +45,46 @@ const LogScore = () => {
       if (error) {
         console.error("Error fetching current game:", error);
       } else {
-        setCurrentGame(data.current_game || 1);
+        setScoreData(data);
       }
     }
     fetchGame();
+
+    // Create a channel and subscribe to realtime changes
+    const subscription = supabase
+    .channel('scoreboard-channel')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'scoreboard',
+        filter: 'id=eq.1',
+      },
+      (payload) => {
+        console.log("Realtime update received on Log Score:", payload);
+        setScoreData(payload.new);
+      }
+    )
+    .subscribe();
+
+    // Cleanup the subscription when the component unmounts
+    return () => {
+      supabase.removeChannel(subscription);
+    };
   }, []);
-
-   // Function to update the current game in Supabase
-   const updateCurrentGame = async (newGameNumber) => {
-
-    setCurrentGame(newGameNumber); // Update state immediately for UI responsiveness
-
-    const { error } = await supabase
-      .from('scoreboard')
-      .update({ current_game: newGameNumber })
-      .eq('id', 1);
-
-    if (error) {
-      console.error("Error updating current game:", error);
-    } else {
-      console.log("Current game updated to:", newGameNumber);
-    }
-  };
-
-
-
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox>
-        <Grid container spacing={3}>
+        <Grid container spacing={1}>
+          <Grid item xs={12} lg={6}>
+            <RallyController />
+          </Grid>
           <Grid item xs={12} lg={6}>
             <BasicEventInformation />
           </Grid>
-          <Grid item xs={12} lg={6}>
-            <Card id="incriment-games" sx={{ overflow: "visible" }}>
-              <MDBox p={3}>
-                  <MDTypography variant="h5">
-                    {"Current Game: " + currentGame}
-                  </MDTypography>
-              </MDBox>
-              <MDBox p={3}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} lg={6}>
-                    <MDButton
-                              variant="gradient"
-                              color="dark"
-                              fullWidth
-                              onClick={() => updateCurrentGame(currentGame > 1 ? currentGame - 1 : currentGame)}
-                              >
-                              Previous
-                    </MDButton>
-                  </Grid>
-                  <Grid item xs={12} lg={6}>
-                    <MDButton
-                              variant="gradient"
-                              color="dark"
-                              fullWidth
-                              onClick={() => updateCurrentGame(currentGame + 1)}
-                              >
-                              Next
-                    </MDButton>
-                  </Grid>
-                </Grid>
-              </MDBox>
-            </Card>
-          </Grid>
-          {gameNumbers.map((gameNumber) => (
-            <Grid item xs={12} lg={2.4} key={gameNumber}>
-              <TeamScore gameNumber={gameNumber} />
-            </Grid>
-          ))}
         </Grid>
       </MDBox>
     </DashboardLayout>
