@@ -22,6 +22,9 @@ const globals = {
   html: {
     scrollBehavior: "smooth",
   },
+  "input, textarea": { 
+    fontSize: "16px !important",
+  },
   "*, *::before, *::after": {
     margin: 0,
     padding: 0,

@@ -152,7 +152,7 @@ function Configurator() {
         px={3}
       >
         <MDBox>
-          <MDTypography variant="h5">Material UI Configurator</MDTypography>
+          <MDTypography variant="h5">Kangaroo Court Config</MDTypography>
           <MDTypography variant="body2" color="text">
             See our dashboard options.
           </MDTypography>
@@ -176,7 +176,7 @@ function Configurator() {
       <Divider />
 
       <MDBox pt={0.5} pb={3} px={3}>
-        <MDBox>
+        {/* <MDBox>
           <MDTypography variant="h6">Sidenav Colors</MDTypography>
 
           <MDBox mb={0.5}>
@@ -228,9 +228,9 @@ function Configurator() {
               />
             ))}
           </MDBox>
-        </MDBox>
+        </MDBox> */}
 
-        <MDBox mt={3} lineHeight={1}>
+        <MDBox mt={0} lineHeight={1}>
           <MDTypography variant="h6">Sidenav Type</MDTypography>
           <MDTypography variant="button" color="text">
             Choose between different sidenav types.
@@ -323,7 +323,7 @@ function Configurator() {
           <Switch checked={darkMode} onChange={handleDarkMode} />
         </MDBox>
         <Divider />
-        <MDBox mt={3} mb={2}>
+        {/* <MDBox mt={3} mb={2}>
           <MDBox mb={2}>
             <MDButton
               component={Link}
@@ -388,8 +388,8 @@ function Configurator() {
               <FacebookIcon />
               &nbsp; Share
             </MDButton>
-          </MDBox>
-        </MDBox>
+          </MDBox> */}
+        {/* </MDBox> */}
       </MDBox>
     </ConfiguratorRoot>
   );

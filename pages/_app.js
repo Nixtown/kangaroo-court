@@ -129,7 +129,7 @@ function Main({ Component, pageProps }) {
 
   const configsButton = (
     <MDBox
-      display="flex"
+      display="none"
       justifyContent="center"
       alignItems="center"
       width="3.25rem"

@@ -88,6 +88,7 @@ function Illustration() {
             label="Password"
             fullWidth
             value={password}
+            
             onChange={(e) => setPassword(e.target.value)}
           />
         </MDBox>

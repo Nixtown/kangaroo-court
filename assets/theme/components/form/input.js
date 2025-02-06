@@ -25,7 +25,7 @@ const { borderWidth } = borders;
 const input = {
   styleOverrides: {
     root: {
-      fontSize: size.sm,
+      fontSize: "16px",
       color: dark.main,
 
       "&:hover:not(.Mui-disabled):before": {

@@ -209,7 +209,7 @@ useEffect(() => {
 
   return  (
     <MDBox>
-      <Card id="incriment-games"sx={{ overflow: "visible", width: "100%"  } }>
+      <Card id="incriment-games"sx={{ width: "100%"  } }>
       <MDBox p={3}>
           <MDBox>
             <MDTypography variant="h5">
@@ -295,7 +295,7 @@ useEffect(() => {
        
        ------------------------------------- */}
       <MDBox mt={3}>
-      <Card id="incriment-games" sx={{ overflow: "visible", width: "100%" } }>
+      <Card id="incriment-games" sx={{ width: "100%" } }>
         <MDBox p={3} >
           <MDTypography variant="h5">
           Manually Update Score
@@ -363,7 +363,7 @@ useEffect(() => {
        
        ------------------------------------- */}
       <MDBox mt={3}>
-      <Card id="incriment-games" sx={{ overflow: "visible", width: "100%" } }>
+      <Card id="incriment-games" sx={{ width: "100%" } }>
         <MDBox p={3} >
           <MDTypography variant="h5">
           Basic Event Information
