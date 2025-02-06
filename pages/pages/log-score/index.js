@@ -78,12 +78,9 @@ const LogScore = () => {
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox>
-        <Grid container spacing={1}>
-          <Grid item xs={12} lg={6}>
+        <Grid container spacing={1} justifyContent="center">
+          <Grid item xs={12} lg={7}>
             <RallyController />
-          </Grid>
-          <Grid item xs={12} lg={6}>
-            <BasicEventInformation />
           </Grid>
         </Grid>
       </MDBox>
