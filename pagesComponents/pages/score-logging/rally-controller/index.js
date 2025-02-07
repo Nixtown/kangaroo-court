@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from '/lib/supabaseClient';
+import { useMediaQuery } from '@mui/material';
+
 
 
 // NextJS Material Dashboard 2 PRO components
@@ -13,11 +15,13 @@ import MDTypography from "/components/MDTypography";
 import MDButton from "/components/MDButton";
 import ButtonGroup from '@mui/material/ButtonGroup';
 import MDInput from "/components/MDInput";
-
+import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
 
 const RallyController = () => {
 
 const [scoreData, setScoreData] = useState(null);
+const isSmallScreen = useMediaQuery('(max-width:850px)');
+
 
 useEffect(() => {
     // Fetch initial data
@@ -212,13 +216,20 @@ useEffect(() => {
       <Card id="incriment-games"sx={{ width: "100%"  } }>
       <MDBox p={3}>
           <MDBox>
-            <MDTypography variant="h5">
-              {scoreData ? `Game: ${scoreData.current_game}` : "...Loading"}
+            <MDTypography variant="h5" textAlign="center" mb={1}>
+              {scoreData ? `Rally Controller | Game: ${scoreData.current_game}` : "...Loading"}
             </MDTypography>
           </MDBox>
           <Grid container spacing={0} pb={3}>
-            <Grid item xs={12} >
-              <MDTypography textAlign="center" variant="subtitle2">
+            <Grid item xs={12} display="flex" justifyContent="center">
+              <Grid item style={{ 
+           borderRadius: "8px 0 0 8px", boxShadow: '0px 6px 10px 0px rgba(0,0,0,0.26)',
+           zoom: isSmallScreen ? 0.4 : 1 ,
+            }}>
+             
+              <BasicScoreBoard   />
+              </Grid>
+              {/* <MDTypography textAlign="center" variant="subtitle2">
               {scoreData?.server === 1 || scoreData?.server === 2 
               ? scoreData?.team_a ?? "Loading..." 
               : scoreData?.team_b ?? "Loading..."}
@@ -232,8 +243,8 @@ useEffect(() => {
               </MDTypography>
               <MDTypography textAlign="center" variant="subtitle1">
                   {getServerLabel(scoreData?.server)}
-              </MDTypography>
-              </Grid>
+              </MDTypography> */}
+            </Grid>
           </Grid>
           <MDBox>
             <ButtonGroup variant="outlined" sx={{ height: "300px", width: "100%" }} aria-label="Basic button group" >

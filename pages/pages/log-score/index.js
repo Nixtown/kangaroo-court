@@ -17,12 +17,10 @@ import MDBox from "/components/MDBox";
 import Grid from "@mui/material/Grid";
 import DashboardLayout from "/examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
-import MDTypography from "/components/MDTypography";
-import Card from "@mui/material/Card";
-import MDButton from "/components/MDButton";
+
 
 // Layout components
-import BasicEventInformation from "/pagesComponents/pages/score-logging/basic-event-information";
+
 import RallyController from "/pagesComponents/pages/score-logging/rally-controller";
 
 const LogScore = () => {
@@ -78,8 +76,8 @@ const LogScore = () => {
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox>
-        <Grid container spacing={1} justifyContent="center">
-          <Grid item xs={12} lg={7}>
+        <Grid container spacing={1}>
+          <Grid item xs={12} lg={12}>
             <RallyController />
           </Grid>
         </Grid>

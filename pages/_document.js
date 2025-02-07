@@ -34,6 +34,14 @@ export default class MyDocument extends Document {
             href="https://fonts.googleapis.com/css?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Two+Tone|Material+Icons+Round|Material+Icons+Sharp&display=swap"
             rel="stylesheet"
           />
+          <link
+          href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap"
+          rel="stylesheet"
+          />
+           <link
+          href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+          rel="stylesheet"
+          />
           {/* Inject MUI styles first to match with the prepend: true configuration. */}
           {this.props.emotionStyleTags}
         </Head>

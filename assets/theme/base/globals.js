@@ -39,6 +39,9 @@ const globals = {
   "a.link:hover, .link:hover, a.link:focus, .link:focus": {
     color: `${dark.main} !important`,
   },
+  ".obs-transparent": { // Class to apply transparent background
+    backgroundColor: "transparent !important",
+  },
 };
 
 export default globals;
