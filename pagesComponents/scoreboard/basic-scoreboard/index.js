@@ -136,7 +136,7 @@ export default function BasicScoreBoard() {
                               width: 12,
                               height: 12,
                               borderRadius: "50%",
-                              backgroundColor: "#05ff05",
+                              backgroundColor: "#03b403",
                               display: (currentServer === 3 || currentServer === 4) ? "default" : "none",
                               
                             }}
@@ -148,7 +148,7 @@ export default function BasicScoreBoard() {
                               width: 12,
                               height: 12,
                               borderRadius: "50%",
-                              backgroundColor: "#05ff05",
+                              backgroundColor: "#03b403",
                               display: currentServer === 4 ? "default" : "none",
                       
                             }}

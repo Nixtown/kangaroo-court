@@ -84,6 +84,11 @@ const colors = {
     focus: "#2c3c58",
   },
 
+  elare: {
+    main: "#0033a0",
+    focus: "#0033a0",
+  },
+
   grey: {
     100: "#f8f9fa",
     200: "#f0f2f5",

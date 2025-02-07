@@ -250,13 +250,20 @@ useEffect(() => {
             <ButtonGroup variant="outlined" sx={{ height: "300px", width: "100%" }} aria-label="Basic button group" >
               <MDButton
                       variant="contained"
-                      color="success"
+                      sx={{
+                        '&:hover': {
+                          backgroundColor: "#0040cb", // Replace with the desired color value, e.g., '#ff0000'
+                        },
+                      }}
+                      color="elare"
                       fullWidth
                       size="large"
                       onClick={() => handleRallyResult(true)}
                       >
                       Won <br/>
                       Rally
+
+          
               </MDButton>
               <MDButton
                       variant="gradient"
