@@ -9,8 +9,12 @@ import { supabase } from '/lib/supabaseClient';
 
 export default function BasicScoreboardOutput() {
   const [scoreData, setScoreData] = useState(null);
-  const totalGames = scoreData?.current_game;
-  const currentServer = scoreData?.server;
+  const totalGames = scoreData?.current_game != null 
+  ? scoreData.current_game.toString().toUpperCase() 
+  : '';
+const currentServer = scoreData?.server != null 
+  ? scoreData.server.toString().toUpperCase() 
+  : '';
 
 
   useEffect(() => {

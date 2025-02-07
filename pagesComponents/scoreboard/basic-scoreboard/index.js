@@ -11,6 +11,9 @@ export default function BasicScoreBoard() {
   const [scoreData, setScoreData] = useState(null);
   const totalGames = scoreData?.current_game;
   const currentServer = scoreData?.server;
+  const teamAName = scoreData?.team_a != null ? scoreData.team_a.toString().toUpperCase() : '';
+  const teamBName = scoreData?.team_b != null ? scoreData.team_b.toString().toUpperCase() : '';
+
 
 
   useEffect(() => {
@@ -90,7 +93,7 @@ export default function BasicScoreBoard() {
                   <Grid display="flex">
                     <Grid>
                       <MDTypography variant="h3" sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", color: "#ffffff" }}>
-                        NIX/CULLEM
+                        {teamAName}
                       </MDTypography>
                     </Grid>
                     <Grid display="flex" alignItems="center" sx={{ width: "69px", marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>
@@ -123,7 +126,7 @@ export default function BasicScoreBoard() {
                   <Grid display="flex">
                     <Grid>
                       <MDTypography variant="h3" sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", color: "#ffffff" }}>
-                        NIX/CULLEMAND
+                        {teamBName}
                       </MDTypography>
                     </Grid>
                     <Grid display="flex" alignItems="center" sx={{ marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>
