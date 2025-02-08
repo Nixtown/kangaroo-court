@@ -8,21 +8,31 @@ function BasicScoreNode({ teamAScore, teamBScore, isCurrentGame = false }) {
 
     const activeScoreColor = isCurrentGame ? "#ffffff" : "#e8e8e8";
     return (
-        <Grid sx={{ bgcolor: activeScoreColor }}
+        <Grid 
+        sx={{ 
+            bgcolor: activeScoreColor ,
+            borderRadius: isCurrentGame ? " 0px 6px 6px 0px" : "0 0 0 0",
+        }}
             > 
                 <Grid container direction="column" sx={{
                 justifyContent: "center",
                 alignItems: "center",
-                padding: "0 3px",
-                minWidth: "40px"
+                padding: "6px 3px",
+                minWidth: "40px",
                 }}>
                     <Grid item lg={12}>
-                    <MDTypography variant="h3" sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", color: "#181818" }}>
+                    <MDTypography variant="h3" 
+                    sx={{ 
+                        fontFamily: "'Montserrat', sans-serif", 
+                        fontWeight: "bold", 
+                        color: "#181818", 
+                        lineHeight: "34px", 
+                        }}>
                         {teamAScore}
                     </MDTypography>
                     </Grid>
                     <Grid item lg={12}>
-                    <MDTypography variant="h3" sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", color: "#181818" }}>
+                    <MDTypography variant="h3" sx={{ fontFamily: "'Montserrat', sans-serif", fontWeight: "bold", color: "#181818", lineHeight: "34px", }}>
                         {teamBScore}
                     </MDTypography>
                     </Grid>

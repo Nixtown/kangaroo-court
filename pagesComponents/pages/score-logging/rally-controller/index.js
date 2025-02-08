@@ -91,7 +91,8 @@ useEffect(() => {
     switch (scoreData.server) {
       case 1:
         if (rallyWon) {
-          newTeamAScore += 1; // Team A scores
+          newTeamAScore += 1;
+          console.log("New Team A Score", newTeamAScore)
         } 
         newServer = rallyWon ? 1 : 2; // Stay on server 1 if won, else move to server 2
         break;
@@ -222,28 +223,29 @@ useEffect(() => {
           </MDBox>
           <Grid container spacing={0} pb={3}>
             <Grid item xs={12} display="flex" justifyContent="center">
-              <Grid item style={{ 
-           borderRadius: "8px 0 0 8px", boxShadow: '0px 6px 10px 0px rgba(0,0,0,0.26)',
-           zoom: isSmallScreen ? 0.4 : 1 ,
-            }}>
-             
-              <BasicScoreBoard   />
-              </Grid>
-              {/* <MDTypography textAlign="center" variant="subtitle2">
+              <Grid item>
+              {!isSmallScreen &&<BasicScoreBoard   />}
+              {isSmallScreen &&
+              <MDBox>
+              <MDTypography textAlign="center" variant="subtitle2">
               {scoreData?.server === 1 || scoreData?.server === 2 
               ? scoreData?.team_a ?? "Loading..." 
               : scoreData?.team_b ?? "Loading..."}
               </MDTypography>
               <MDTypography textAlign="center" variant="h1">
-                {scoreData &&
-                scoreData[`team_a_score_game${scoreData.current_game}`] !== undefined &&
-                scoreData[`team_b_score_game${scoreData.current_game}`] !== undefined
-                ? `(${scoreData[`team_a_score_game${scoreData.current_game}`]} - ${scoreData[`team_b_score_game${scoreData.current_game}`]})`
-                : "Loading..."}
+              {scoreData &&
+              scoreData[`team_a_score_game${scoreData.current_game}`] !== undefined &&
+              scoreData[`team_b_score_game${scoreData.current_game}`] !== undefined
+              ? `(${scoreData[`team_a_score_game${scoreData.current_game}`]} - ${scoreData[`team_b_score_game${scoreData.current_game}`]})`
+              : "Loading..."}
               </MDTypography>
               <MDTypography textAlign="center" variant="subtitle1">
-                  {getServerLabel(scoreData?.server)}
-              </MDTypography> */}
+              {getServerLabel(scoreData?.server)}
+              </MDTypography>
+              </MDBox>
+              }
+
+              </Grid>
             </Grid>
           </Grid>
           <MDBox>
@@ -330,10 +332,9 @@ useEffect(() => {
                 <MDInput
                 fullWidth
                 label="(A) Team Score"
-                value={scoreData?.[`team_a_score_game${scoreData.current_game}`] ?? ""}
                 onChange={(e) => setScoreData((prev) => ({
                   ...prev,
-                  [`team_a_score_game${scoreData.current_game}`]: e.target.value,
+                  [`team_a_score_game${scoreData.current_game}`]: Number(e.target.value) || 0,
                 }))}
                 inputProps={{ type: "number", autoComplete: "" }}
                 />
@@ -342,10 +343,9 @@ useEffect(() => {
                 <MDInput
                 fullWidth
                 label="(B) Team Score"
-                value={scoreData?.[`team_b_score_game${scoreData.current_game}`] ?? ""}
                 onChange={(e) => setScoreData((prev) => ({
                   ...prev,
-                  [`team_b_score_game${scoreData.current_game}`]: e.target.value,
+                  [`team_b_score_game${scoreData.current_game}`]: Number(e.target.value) || 0,
                 }))}
                 inputProps={{ type: "number", autoComplete: "" }}
                 />

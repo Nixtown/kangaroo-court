@@ -60,7 +60,7 @@ const routes = [
         {
           name: "OBS Output",
           key: "all-projects",
-          route: "/score-output-active",
+          route: "/scoreboards/basic",
         },
       ],
     },
