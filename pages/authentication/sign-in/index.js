@@ -60,7 +60,7 @@ function Illustration() {
       }
 
       // Redirect to the dashboard
-      router.push("/pages/log-score");
+      router.push("/app/rally-controller");
     } else {
       setError("Invalid username or password");
     }

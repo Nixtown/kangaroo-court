@@ -55,7 +55,7 @@ const routes = [
         {
           name: "Log Score",
           key: "profile-overview",
-          route: "/pages/log-score",
+          route: "/app/rally-controller",
         },
         {
           name: "OBS Output",

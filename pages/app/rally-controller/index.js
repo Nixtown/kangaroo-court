@@ -23,15 +23,15 @@ import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 
 import RallyController from "/pagesComponents/pages/score-logging/rally-controller";
 
-const LogScore = () => {
+const RallyControllerDash = () => {
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox>
         <Grid container spacing={1}>
-          <Grid item xs={12} lg={12}>
-            <RallyController />
+          <Grid item xs={12} lg={12} >
+            <RallyController  />
           </Grid>
         </Grid>
       </MDBox>
@@ -41,4 +41,4 @@ const LogScore = () => {
 
 
 
-export default LogScore;
+export default RallyControllerDash;

@@ -63,14 +63,16 @@ export default function BasicScoreBoard() {
     
     return (
             
-          <MDBox>
+          <MDBox sx={{
+            filter: "drop-shadow(0 0 5px rgba(0,0,0,0.3))",
+          }}>
             <MDBox
             sx={{
               bgcolor: "#ffffff",
               padding: "0px 12px",
               maxWidth: "fit-content",
-              marginLeft: "18px"
-
+              marginLeft: "18px",
+              borderRadius: " 6px 6px 0 0",
             }}
             > 
               <MDTypography 
@@ -78,6 +80,7 @@ export default function BasicScoreBoard() {
                         sx={{ 
                           fontFamily: "'Montserrat', sans-serif",
                           fontWeight: "bold", 
+                         
                           fontSize: "18px",
                           color: "#000000" }}>
                          {scoreData?.tournament_name.toString().toUpperCase() || ""}

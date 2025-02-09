@@ -21,6 +21,11 @@ const RallyController = () => {
 
 const [scoreData, setScoreData] = useState(null);
 const isSmallScreen = useMediaQuery('(max-width:850px)');
+const currentTeamAScore = scoreData?.[`team_a_score_game${scoreData?.current_game}`] ?? "";
+const currentTeamBScore = scoreData?.[`team_b_score_game${scoreData?.current_game}`] ?? "";
+const firstToPoints = scoreData?.first_to_points ?? "11";
+const winBy = scoreData?.win_by ?? "2";
+const bestOf = scoreData?.best_of ?? "3";
 
 
 useEffect(() => {
@@ -169,13 +174,19 @@ useEffect(() => {
     // Ensure scoreData is available
     if (!scoreData) return;
   
-    // Compute the updated data object locally using the current game number.
+    // Create new object with new score data cleared
     const updatedScoreData = {
       ...scoreData,
-      [`team_a_score_game${scoreData.current_game}`]: 0,
-      [`team_b_score_game${scoreData.current_game}`]: 0,
+      ...Object.fromEntries(
+        Array.from({ length: 5 }, (_, i) => [
+          [`team_a_score_game${i + 1}`, 0],
+          [`team_b_score_game${i + 1}`, 0],
+        ]).flat()
+      ),
+      current_game: 1, // Reset current_game to 1
     };
-  
+    
+    
     // Update the local state with the computed data.
     setScoreData(updatedScoreData);
   
@@ -198,8 +209,7 @@ useEffect(() => {
 
   
   const handleUpdate = async (e) => {
-    e.preventDefault();
-  
+
     const { error } = await supabase
       .from("scoreboard")
       .update(scoreData) // Directly pass scoreData object
@@ -211,11 +221,24 @@ useEffect(() => {
       console.log("Data saved successfully:", scoreData);
     }
   };
+  const manualUpdateScore = (newScore, team) => {
+    setScoreData((prev) => {
+      const updatedScoreData = {
+        ...prev,
+        [`team_${team}_score_game${prev.current_game}`]: Number(newScore) || 0,
+      };
+       
+      handleUpdateWithData(updatedScoreData);
+  
+      return updatedScoreData; // This ensures the state actually updates.
+    });
+  };
+  
 
   return  (
     <MDBox>
       <Card id="incriment-games"sx={{ width: "100%"  } }>
-      <MDBox p={3}>
+      <MDBox p={3} >
           <MDBox>
             <MDTypography variant="h5" textAlign="center" mb={1}>
               {scoreData ? `Rally Controller | Game: ${scoreData.current_game}` : "...Loading"}
@@ -223,8 +246,8 @@ useEffect(() => {
           </MDBox>
           <Grid container spacing={0} pb={3}>
             <Grid item xs={12} display="flex" justifyContent="center">
-              <Grid item>
-              {!isSmallScreen &&<BasicScoreBoard   />}
+              <Grid item >
+              {!isSmallScreen &&<BasicScoreBoard    />}
               {isSmallScreen &&
               <MDBox>
               <MDTypography textAlign="center" variant="subtitle2">
@@ -260,6 +283,7 @@ useEffect(() => {
                       color="elare"
                       fullWidth
                       size="large"
+                     
                       onClick={() => handleRallyResult(true)}
                       >
                       Won <br/>
@@ -272,16 +296,33 @@ useEffect(() => {
                       color="dark"
                       fullWidth
                       size="large"
+               
                       onClick={() => handleRallyResult(false)}
                       >
                       Lost<br/>
                       Rally
               </MDButton>
             </ButtonGroup>
-          </MDBox>         
-          <MDBox mt={3} >
-            <Grid container spacing={3}  >
-              <Grid item xs={12} lg={6}>
+            <Grid container spacing={3} pt={3}>
+            <Grid item xs={12} sm={6}>
+                <MDInput
+                fullWidth
+                label= {`Team A | Game: ${scoreData?.current_game}`}
+                value={currentTeamAScore}
+                onChange={(e) => manualUpdateScore(e.target.value, "a")}
+                inputProps={{ type: "number", autoComplete: "" }}
+                />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <MDInput
+                fullWidth
+                label= {`Team B | Game: ${scoreData?.current_game}`}
+                value={currentTeamBScore}
+                onChange={(e) => manualUpdateScore(e.target.value, "b")}
+                inputProps={{ type: "number", autoComplete: "" }}
+                />
+            </Grid>
+            <Grid item xs={12} lg={6}>
                 <MDButton
                   variant="gradient"
                   color="dark"
@@ -289,7 +330,7 @@ useEffect(() => {
                   onClick={() => updateCurrentServer(scoreData.server === 4 ? 1 : scoreData.server + 1)}
 
                   >
-                  Cycle Server
+                  Next Server
                 </MDButton>
               </Grid>
               <Grid item xs={12} lg={6}>
@@ -299,11 +340,11 @@ useEffect(() => {
                     fullWidth
                     onClick={() => updateCurrentGame(scoreData.current_game === 5 ? 1 : scoreData.current_game + 1)}
                     >
-                    Cycle Game
+                    Next Game
                   </MDButton>
               </Grid>
-            </Grid>
-          </MDBox> 
+              </Grid>
+          </MDBox>          
         </MDBox> 
       </Card>
      
@@ -318,55 +359,70 @@ useEffect(() => {
       <Card id="incriment-games" sx={{ width: "100%" } }>
         <MDBox p={3} >
           <MDTypography variant="h5">
-          Manually Update Score
+           Game Settings
           </MDTypography>
         </MDBox>
-        <MDBox
-          component="form"
-          pb={3}
-          px={3}
-          onSubmit={handleUpdate}
-        >
+        <MDBox pb={3}
+          px={3}>
+        <MDTypography pb={2}variant="subtitle2">
+          Win Conditions
+          </MDTypography>
+
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+
+            <Grid item xs={4} sm={4}>
                 <MDInput
                 fullWidth
-                label="(A) Team Score"
-                onChange={(e) => setScoreData((prev) => ({
-                  ...prev,
-                  [`team_a_score_game${scoreData.current_game}`]: Number(e.target.value) || 0,
-                }))}
+                label= "First to X"
+                value= {firstToPoints}
+                onChange={(e) => {
+                  setScoreData((prev) => {
+                    const updatedScoreData = { ...prev, first_to_points: Number(e.target.value) };
+                    handleUpdate(updatedScoreData); // Call handleUpdate with new data
+                    return updatedScoreData; // Ensure React updates state
+                  });
+                }}
                 inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={4} sm={4}>
                 <MDInput
                 fullWidth
-                label="(B) Team Score"
-                onChange={(e) => setScoreData((prev) => ({
-                  ...prev,
-                  [`team_b_score_game${scoreData.current_game}`]: Number(e.target.value) || 0,
-                }))}
+                label= "Win by X"
+                value={winBy}
+                onChange={(e) => {
+                  setScoreData((prev) => {
+                    const updatedScoreData = { ...prev, win_by: Number(e.target.value) };
+                    handleUpdate(updatedScoreData); // Call handleUpdate with new data
+                    return updatedScoreData; // Ensure React updates state
+                  });
+                }}
                 inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
-            <Grid item xs={12} lg={6}>
-                <MDButton
-                variant="gradient"
-                color="dark"
+            <Grid item xs={4} sm={4}>
+                <MDInput
                 fullWidth
-                type="submit"
-                >
-                {scoreData?.current_game ?  `Update Game ${scoreData.current_game}` : "...Loading" }
-                </MDButton>
+                label= "Best of X"
+                value={bestOf}
+                onChange={(e) => {
+                  setScoreData((prev) => {
+                    const updatedScoreData = { ...prev, best_of: Number(e.target.value) };
+                    handleUpdate(updatedScoreData); // Call handleUpdate with new data
+                    return updatedScoreData; // Ensure React updates state
+                  });
+                }}
+                inputProps={{ type: "number", autoComplete: "" }}
+                />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            
+              <Grid item xs={12} lg={6}>
                 <MDButton
                 variant="gradient"
                 color="dark"
                 fullWidth
                 onClick={handleUpdateAndClear}>
-                {scoreData?.current_game ?  `Clear Game ${scoreData.current_game}` : "...Loading" }
+                Clear Match
                 </MDButton>
             </Grid>
           </Grid>
