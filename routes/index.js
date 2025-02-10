@@ -53,15 +53,25 @@ const routes = [
     noCollapse: true,
     collapse: [
         {
-          name: "Log Score",
+          name: "Create Match",
+          key: "create-match",
+          route: "/app/create-match",
+        },
+        {
+          name: "Rally Controller",
           key: "profile-overview",
           route: "/app/rally-controller",
         },
         {
-          name: "OBS Output",
-          key: "all-projects",
-          route: "/scoreboards/basic",
+          name: "Rally Controller2",
+          key: "profile-overview2",
+          route: "/app/rally-controller-2",
         },
+        {
+          name: "OBS Output",
+          key: "obs-out",
+          route: "/scoreboards/basic",
+        }
       ],
     },
   // {

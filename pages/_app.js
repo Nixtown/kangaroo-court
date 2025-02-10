@@ -64,6 +64,9 @@ import appleIcon from "/assets/images/apple-icon.png";
 import brandWhite from "/assets/images/logos/elare-ball-light.png";
 import brandDark from "/assets/images/logos/elare-ball-dark.png";
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createCache({ key: "css", prepend: true });
 
@@ -211,6 +214,18 @@ function MyApp({
           <title>Kangaroo Court</title>
         </Head>
         <Main Component={Component} pageProps={pageProps} />
+        {/* Render ToastContainer here so it's available on every page */}
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </CacheProvider>
     </MaterialUIControllerProvider>
   );
