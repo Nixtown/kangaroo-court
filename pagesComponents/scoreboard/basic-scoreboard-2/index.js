@@ -15,6 +15,11 @@ export default function BasicScoreBoard2() {
   const gamesData = activeGames ?? [{ team_a_score: 0, team_b_score: 0, game_number: 1 }];
   const matchData = activeMatch ?? { tournament_name: "..loading", current_game: 1, match_title: "Loading...", team_a_name: "Team A", team_b_name: "Team B" };
   const currentServer = matchData.server ?? 2;
+  const currentGamePoints =
+  (currentServer === 1 || currentServer === 2)
+    ? activeGames[matchData.current_game - 1].team_a_game_points
+    : activeGames[matchData.current_game - 1].team_b_game_points;
+
   
   useEffect(() => {
     document.body.classList.add("obs-transparent");
@@ -335,7 +340,9 @@ export default function BasicScoreBoard2() {
               padding: "0px 8px",
               borderRadius: " 0 0 6px 6px",
               maxWidth: "fit-content",
-              marginLeft: "18px"
+              marginLeft: "18px",
+              position: "relative", // Required for z-index to work
+              zIndex: 2, // Lower stacking order so it appears underneath
 
             }}
             > 
@@ -349,6 +356,33 @@ export default function BasicScoreBoard2() {
                          {activeMatch?.match_title.toString().toUpperCase() || ''}
                 </MDTypography>
             </MDBox>
+            {matchData.is_game_point && (
+            <MDBox
+            sx={{
+              bgcolor: "#ffffff",
+              padding: "8px 8px 0 8px",
+              borderRadius: " 0 0 6px 6px",
+              maxWidth: "fit-content",
+              marginLeft: "18px",
+              marginTop: "-8px",
+              background: "linear-gradient(90deg, rgba(0,51,160,1) 0%, rgba(0,65,204,1) 100%)",
+              position: "relative", // Required for z-index to work
+              zIndex: 1, // Lower stacking order so it appears underneath
+            }}
+            > 
+              <MDTypography 
+                        
+                        sx={{ 
+                          fontFamily: "'Montserrat', sans-serif",
+                          fontWeight: "bold", 
+                          fontSize: "16px",
+                          color: "#ffffff" }}>
+                         {
+                          `GAME POINT: ${currentGamePoints}`
+                         }
+                </MDTypography>
+            </MDBox>
+            )}
           </MDBox>
     );
   }
