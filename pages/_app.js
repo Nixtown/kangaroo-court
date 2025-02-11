@@ -225,6 +225,7 @@ function MyApp({
           pauseOnFocusLoss
           draggable
           pauseOnHover
+          
         />
       </CacheProvider>
     </MaterialUIControllerProvider>

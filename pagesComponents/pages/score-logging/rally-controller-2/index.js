@@ -16,7 +16,7 @@ import MDTypography from "/components/MDTypography";
 import MDButton from "/components/MDButton";
 import ButtonGroup from '@mui/material/ButtonGroup';
 import MDInput from "/components/MDInput";
-import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
+import BasicScoreBoard2 from "/pagesComponents/scoreboard/basic-scoreboard-2";
 import next from "next";
 
 const RallyController2 = () => {
@@ -465,7 +465,7 @@ const RallyController2 = () => {
           <Grid container spacing={0} pb={3}>
             <Grid item xs={12} display="flex" justifyContent="center">
               <Grid item >
-              {!isSmallScreen &&<BasicScoreBoard    />}
+              {!isSmallScreen &&<BasicScoreBoard2    />}
               {isSmallScreen &&
               <MDBox>
               <MDTypography textAlign="center" variant="subtitle2">
@@ -534,7 +534,7 @@ const RallyController2 = () => {
                 onChange={(e) => updateActiveGame("team_b_score", Number(e.target.value))}                inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid item xs={12} lg={12}>
                 <MDButton
                   variant="gradient"
                   color="dark"
