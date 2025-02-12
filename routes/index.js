@@ -58,14 +58,14 @@ const routes = [
           route: "/app/create-match",
         },
         {
+          name: "Create Match 2",
+          key: "create-match-2",
+          route: "/app/create-match-2",
+        },
+        {
           name: "Rally Controller",
           key: "profile-overview",
           route: "/app/rally-controller",
-        },
-        {
-          name: "Rally Controller2",
-          key: "profile-overview2",
-          route: "/app/rally-controller-2",
         },
         {
           name: "OBS Output",

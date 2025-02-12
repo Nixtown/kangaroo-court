@@ -1,9 +1,10 @@
 
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from '/lib/supabaseClient';
 import { useMediaQuery } from '@mui/material';
+import { toast } from "react-toastify";
 
 
 
@@ -16,88 +17,137 @@ import MDButton from "/components/MDButton";
 import ButtonGroup from '@mui/material/ButtonGroup';
 import MDInput from "/components/MDInput";
 import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
+import next from "next";
 
 const RallyController = () => {
+  const [activeMatch, setActiveMatch] = useState(null);
+  const [activeGame, setActiveGame] = useState(null);
+  const gameData = activeGame ?? { team_a_score: 0, team_b_score: 0, game_number: 1 };
+  const matchData = activeMatch ?? { current_game: 1, match_title: "Loading...", team_a_name: "Team A", team_b_name: "Team B" };
+  const isGamePointUpdatableRef = useRef(true);
+  const isSmallScreen = useMediaQuery('(max-width:850px)');
 
-const [scoreData, setScoreData] = useState(null);
-const isSmallScreen = useMediaQuery('(max-width:850px)');
-const currentTeamAScore = scoreData?.[`team_a_score_game${scoreData?.current_game}`] ?? "";
-const currentTeamBScore = scoreData?.[`team_b_score_game${scoreData?.current_game}`] ?? "";
-const firstToPoints = scoreData?.first_to_points ?? "11";
-const winBy = scoreData?.win_by ?? "2";
-const bestOf = scoreData?.best_of ?? "3";
-
-
-useEffect(() => {
-    // Fetch initial data
-    async function fetchInitialData() {
-        const { data, error } = await supabase
-        .from("scoreboard")
-        .select("*")
-        .eq("id", 1)
-        .single();
-        if (error) {
-        console.error("Error fetching initial data:", error);
-        } else {
-        setScoreData(data);
-        }
-    }
-    fetchInitialData();
+  useEffect(() => {
+    const loadActiveMatchAndGame = async () => {
+      const match = await fetchActiveMatch();
+      if (match) {
+        setActiveMatch(match);
+        const game = await fetchActiveGame(match.id, match.current_game);
+        setActiveGame(game);
+  
+        // ✅ Call checkGamePoint() after setting the game state
+        checkGamePoint(game, match, true);
+      }
+    };
+  
+    loadActiveMatchAndGame(); // ✅ Calls the function when the component mounts
   }, []);
+  
 
-   // Function to update the current game in Supabase
-   const updateCurrentGame = async (newGameNumber) => {
-
-    setScoreData(prev => ({
-        ...prev,
-        current_game: newGameNumber,
-      }));
-
-    const { error } = await supabase
-      .from('scoreboard')
-      .update({ current_game: newGameNumber })
-      .eq('id', 1);
-
+  const fetchActiveMatch = async () => {
+    const { data, error } = await supabase
+      .from("matches")
+      .select("*")
+      .is("active_match", true)
+      .single();
+  
     if (error) {
-      console.error("Error updating current game:", error);
-    } else {
-      console.log("Current game updated from rally controller to:", newGameNumber);
+      console.error("Error fetching active match:", error);
+      return null;
     }
+    return data;
+  };
+  
+  const fetchActiveGame = async (matchId, gameNumber) => {
+    const { data, error } = await supabase
+      .from("game_stats")
+      .select("*")
+      .eq("match_id", matchId)
+      .eq("game_number", gameNumber)
+      .single();
+  
+    if (error) {
+      console.error("Error fetching active game:", error);
+      return null;
+    }
+
+    return data;
   };
 
-  // Function to update the current game in Supabase
-  const updateCurrentServer = async (newGameServer) => {
-
-    setScoreData(prev => ({
-        ...prev,
-        server: newGameServer,
-      }));
-
+  const updateActiveGame = async (keyOrUpdates, value) => {
+    if (!activeGame || !activeMatch) return; // Ensure `activeGame` and `activeMatch` exist
+  
+    // Determine whether we're passed an object of updates or a key/value pair.
+    const updates =
+      typeof keyOrUpdates === "object" && keyOrUpdates !== null
+        ? keyOrUpdates
+        : { [keyOrUpdates]: value };
+  
+    // ✅ Update state immediately by merging the updates into the previous state.
+    setActiveGame((prevGame) => ({
+      ...prevGame,
+      ...updates,
+    }));
+  
+    // ✅ Save updates to Supabase.
     const { error } = await supabase
-      .from('scoreboard')
-      .update({ server: newGameServer })
-      .eq('id', 1);
-
+      .from("game_stats")
+      .update(updates) // Update the specified fields
+      .eq("match_id", activeMatch.id) // Ensure we update the correct match
+      .eq("game_number", activeMatch.current_game); // Ensure we update the correct game
+  
     if (error) {
-      console.error("Error updating current game:", error);
+      console.error("Error updating activeGame with:", updates, error);
     } else {
-      console.log("Current game updated to:", newGameServer);
+      console.log("Updated activeGame with:", updates);
     }
   };
-
-  const handleRallyResult = async (rallyWon) => {
-    if (!scoreData) return; // Ensure scoreData is available
   
-    let newServer = scoreData.server; 
-    let newTeamAScore = scoreData[`team_a_score_game${scoreData.current_game}`];
-    let newTeamBScore = scoreData[`team_b_score_game${scoreData.current_game}`];
-
   
-    switch (scoreData.server) {
+
+  const updateActiveMatch = async (keyOrUpdates, value) => {
+    if (!activeMatch) return; // Ensure `activeMatch` exists
+  
+    // Determine whether we're passed an object of updates or a key and a value.
+    const updates =
+      typeof keyOrUpdates === "object" && keyOrUpdates !== null
+        ? keyOrUpdates
+        : { [keyOrUpdates]: value };
+  
+    // ✅ Update state immediately by merging the updates with the previous state.
+    setActiveMatch((prevMatch) => ({
+      ...prevMatch,
+      ...updates,
+    }));
+  
+    // ✅ Save updates to Supabase.
+    const { error } = await supabase
+      .from("matches")
+      .update(updates) // Pass the entire updates object
+      .eq("id", activeMatch.id); // Update the correct match
+  
+    if (error) {
+      console.error(`Error updating activeMatch with:`, updates, error);
+    } else {
+      console.log(`Updated activeMatch with:`, updates);
+    }
+  };
+  
+  
+  
+  const handleRally = async (rallyWon) => {
+    if (!activeGame) return; // Ensure activeGame is available
+    if (!activeMatch) return; // Ensure activeMatch is available
+
+    let prevServer = activeMatch.server;
+    let newServer = activeMatch.server;
+    let newTeamAScore = activeGame.team_a_score;
+    let newTeamBScore = activeGame.team_b_score;
+
+    switch (activeMatch.server) {
       case 1:
         if (rallyWon) {
           newTeamAScore += 1;
-          console.log("New Team A Score", newTeamAScore)
         } 
         newServer = rallyWon ? 1 : 2; // Stay on server 1 if won, else move to server 2
         break;
@@ -126,33 +176,28 @@ useEffect(() => {
       default:
         newServer = 1;
     }
-  
-    // Update the local state with all new values
-    setScoreData(prev => ({
-      ...prev,
-      [`team_a_score_game${prev.current_game}`]: newTeamAScore, // Dynamically update Team A score
-      [`team_b_score_game${prev.current_game}`]: newTeamBScore, // Dynamically update Team B score
-      server: newServer, // Update server state
-    }));
+    
+    // ✅ Detect if a side-out occurred
+    const sideOut = isSideOut(prevServer, newServer);
 
-    // Update the Supabase database
-    const { error } = await supabase
-      .from("scoreboard")
-      .update({
-        [`team_a_score_game${scoreData.current_game}`]: newTeamAScore, // Dynamically update Team A score
-        [`team_b_score_game${scoreData.current_game}`]: newTeamBScore, // Dynamically update Team B score
-        server: newServer, // Update server state
-      })
-      .eq("id", 1);
+    // Update the local states with all new values
+    updateActiveGame({
+      team_a_score: newTeamAScore,
+      team_b_score: newTeamBScore,
+    });
+    
+    updateActiveMatch("server", newServer)
 
-    if (error) {
-      console.error("Error updating scoreboard:", error);
-    } else {
-      console.log("Scoreboard updated:", { newTeamAScore, newTeamBScore, newServer });
-    }
+    // ✅ Pass the updated values directly to checkGamePoint()
+    await checkGamePoint(
+    { ...activeGame, team_a_score: newTeamAScore, team_b_score: newTeamBScore }, 
+    { ...activeMatch, server: newServer },
+    sideOut,
+    rallyWon
+    );
+  }
 
-  };
-
+  /// Dynamically Create Labels for Mobile
   const getServerLabel = (server) => {
     switch (server) {
       case 1:
@@ -168,102 +213,271 @@ useEffect(() => {
     }
   };
 
-  const handleUpdateAndClear = async (e) => {
-    e.preventDefault();
+  /// Cycle to the next server of the 4 possible
+  const nextServer = () => {
+    if (!activeMatch) return;
+
+    const newServer = (activeMatch.server % 4) + 1;
+    updateActiveMatch("server", newServer);
+
+  }
+
+  const changeGame = async (gameNumber) => {
+    if (!activeMatch)return; // Ensure `activeMatch` exists
+    if (!gameData.game_completed && gameNumber > matchData.current_game)
+    {
+      toast.info("Please complete the current game first. 🙂 ", {
+        position: "top-center", // Positions the toast at the top center
+        autoClose: 3000,        // Auto-closes after 3 seconds
+        hideProgressBar: false, // Displays the progress bar
+        closeOnClick: true,     // Allows dismissal on click
+        pauseOnHover: true,     // Pauses autoClose timer when hovered
+        draggable: true,        // Enables dragging to dismiss
+        theme: "dark",       // Uses the "colored" theme for a vibrant look
+      });
+      return;
+    }
   
-    // Ensure scoreData is available
-    if (!scoreData) return;
+    console.log("GameData", gameData)
+
+
+   
+
+    // ✅ Prevent invalid game numbers
+    if (gameNumber < 1 || gameNumber > activeMatch.best_of) {
+      toast.warning(`Invalid game number: ${gameNumber}. Allowed range: 1 - ${activeMatch.best_of}`, {
+        position: "top-center", // Positions the toast at the top center
+        autoClose: 3000,        // Auto-closes after 3 seconds
+        hideProgressBar: false, // Displays the progress bar
+        closeOnClick: true,     // Allows dismissal on click
+        pauseOnHover: true,     // Pauses autoClose timer when hovered
+        draggable: true,        // Enables dragging to dismiss
+        theme: "dark",       // Uses the "colored" theme for a vibrant look
+      });
+    return;
+    }
+
+     // Change to server 2 since it's most likely a new game
+     updateActiveMatch("server", 2);
   
-    // Create new object with new score data cleared
-    const updatedScoreData = {
-      ...scoreData,
-      ...Object.fromEntries(
-        Array.from({ length: 5 }, (_, i) => [
-          [`team_a_score_game${i + 1}`, 0],
-          [`team_b_score_game${i + 1}`, 0],
-        ]).flat()
-      ),
-      current_game: 1, // Reset current_game to 1
-    };
-    
-    
-    // Update the local state with the computed data.
-    setScoreData(updatedScoreData);
+    console.log(`Switching to Game ${gameNumber}...`);
   
-    // Pass the updated object directly to the update function.
-    await handleUpdateWithData(updatedScoreData);
-  };
+    // ✅ Step 1: Update `current_game` in `activeMatch`
+    await updateActiveMatch("current_game", gameNumber);
   
-  const handleUpdateWithData = async (dataToUpdate) => {
-    const { error } = await supabase
-      .from("scoreboard")
-      .update(dataToUpdate) // Use the locally computed data object
-      .eq("id", 1);
+    // ✅ Step 2: Check if the game exists in `game_stats`
+    const { data: existingGame, error } = await supabase
+      .from("game_stats")
+      .select("*")
+      .eq("match_id", activeMatch.id)
+      .eq("game_number", gameNumber)
+      .maybeSingle();
   
-    if (error) {
-      console.error("Error saving to Supabase:", error);
+    if (error || !existingGame) {
+      console.log(`Game ${gameNumber} does not exist. Creating it now...`);
+  
+      // ✅ Step 3: Create a new game if it doesn’t exist
+      const { data: newGame, error: createError } = await supabase
+        .from("game_stats")
+        .insert([
+          {
+            match_id: activeMatch.id,
+            game_number: gameNumber,
+            team_a_score: 0,
+            team_b_score: 0,
+            team_a_game_points: 0,
+            team_b_game_points: 0,
+            team_a_match_points: 0,
+            team_b_match_points: 0,
+          },
+        ])
+        .select("*")
+        .single();
+  
+      if (createError) {
+        console.error("Error creating new game:", createError);
+        return;
+      }
+  
+      console.log(`Game ${gameNumber} created successfully.`);
+      setActiveGame(newGame); // ✅ Set the newly created game as `activeGame`
+      await updateActiveMatch("server", 2);
+
     } else {
-      console.log("Data saved successfully:", dataToUpdate);
+      console.log(`Game ${gameNumber} already exists.`);
+      setActiveGame(existingGame); // ✅ Load the existing game into `activeGame`
     }
   };
 
+  const isSideOut = (prevServer, newServer) => {
+    const teamAServers = [1, 2];
+    const teamBServers = [3, 4];
   
-  const handleUpdate = async (e) => {
-
-    const { error } = await supabase
-      .from("scoreboard")
-      .update(scoreData) // Directly pass scoreData object
-      .eq("id", 1);
+    // Determine which team the previous server belongs to.
+    const prevTeam = teamAServers.includes(prevServer)
+      ? 'A'
+      : teamBServers.includes(prevServer)
+        ? 'B'
+        : null;
   
-    if (error) {
-      console.error("Error saving to Supabase:", error);
-    } else {
-      console.log("Data saved successfully:", scoreData);
+    // Determine which team the new server belongs to.
+    const newTeam = teamAServers.includes(newServer)
+      ? 'A'
+      : teamBServers.includes(newServer)
+        ? 'B'
+        : null;
+  
+    // If either server doesn't belong to a known team, log a warning.
+    if (!prevTeam || !newTeam) {
+      console.warn("Unexpected server values", { prevServer, newServer });
+      return false;
     }
-  };
-  const manualUpdateScore = (newScore, team) => {
-    setScoreData((prev) => {
-      const updatedScoreData = {
-        ...prev,
-        [`team_${team}_score_game${prev.current_game}`]: Number(newScore) || 0,
-      };
-       
-      handleUpdateWithData(updatedScoreData);
   
-      return updatedScoreData; // This ensures the state actually updates.
-    });
+    // A side-out occurs if the new server belongs to a different team than the previous one.
+    return prevTeam !== newTeam;
   };
   
 
+  const checkGamePoint = async (gameData, matchData, sideOut) => {
+    // Ensure necessary data is provided.
+    if (!gameData || !matchData) {
+      console.log("Missing gameData or matchData; exiting checkGamePoint.");
+      return;
+    }
+    
+  
+    // Destructure game and match data.
+    const {
+      team_a_score,
+      team_b_score,
+      team_a_game_points = 0,
+      team_b_game_points = 0
+    } = gameData;
+    const {
+      first_to_points, // Points required to win a game.
+      win_by,          // Minimum lead required to win a game.
+      server,          // Current server indicator.
+      match_first_to = 3 // Games required to win the match (default is 3).
+    } = matchData;
+    
+    const requiredPoints = first_to_points;
+    const mustWinBy = win_by;
+    
+    // 1. Determine if either team has already won the game.
+    const teamAHasWon =
+      team_a_score >= requiredPoints &&
+      (team_a_score - team_b_score) >= mustWinBy;
+    const teamBHasWon =
+      team_b_score >= requiredPoints &&
+      (team_b_score - team_a_score) >= mustWinBy;
+    const isGameWon = teamAHasWon || teamBHasWon;
+    
+    if (isGameWon) {
+      // Identify the winner using numeric identifiers.
+      const winner = teamAHasWon ? 1 : 2;
+      await updateActiveGame({winner: winner, game_completed: true});
+      // Ensure the match record is updated to reflect that it is no longer game point.
+      await updateActiveMatch("is_game_point", false);
+      toast.success(
+        "Game complete. Final score recorded.",
+        {
+          position: "top-center", // Positions the toast at the top center
+          autoClose: 3000,        // Auto-closes after 3 seconds
+          hideProgressBar: false, // Displays the progress bar
+          closeOnClick: true,     // Allows dismissal on click
+          pauseOnHover: true,     // Pauses autoClose timer when hovered
+          draggable: true,        // Enables dragging to dismiss
+          theme: "dark",       // Uses the "colored" theme for a vibrant look
+          style: { width: "100%", maxWidth: "500px" },
+        }
+      );
+      return;
+    }
+    
+    // 2. Determine if the current rally is game point.
+    // A team is at game point if winning the next rally would win them the game
+    // and that team is the one currently serving.
+    const isTeamAGamePoint =
+      (team_a_score + 1 >= requiredPoints) &&
+      ((team_a_score + 1) - team_b_score >= mustWinBy) &&
+      (server === 1 || server === 2);
+
+    const isTeamBGamePoint =
+      (team_b_score + 1 >= requiredPoints) &&
+      ((team_b_score + 1) - team_a_score >= mustWinBy) &&
+      (server === 3 || server === 4);
+
+    const isGamePoint = isTeamAGamePoint || isTeamBGamePoint;
+
+    if (isGamePoint) {
+      // Example copy for the game point notification.
+      toast.info(
+        "Game Point! The serving team is just one rally away from clinching the game!",
+        {
+          position: "top-center", // Positions the toast at the top center
+          autoClose: 3000,        // Auto-closes after 3 seconds
+          hideProgressBar: false, // Displays the progress bar
+          closeOnClick: true,     // Allows dismissal on click
+          pauseOnHover: true,     // Pauses autoClose timer when hovered
+          draggable: true,        // Enables dragging to dismiss
+          theme: "dark",       // Uses the "colored" theme for a vibrant look
+          style: { width: "100%", maxWidth: "500px" },
+        }
+      );
+    }
+
+    // 3. On side-out, reset the flag that controls whether game point stats can be updated.
+    if (sideOut) {
+      console.log("🔄 Side-Out Occurred! Resetting game point tracking.");
+      isGamePointUpdatableRef.current = true;
+    }
+    
+    // 4. If it's game point and updates are allowed, increment the respective team's game point count.
+    if (isGamePoint && isGamePointUpdatableRef.current) {
+      if (isTeamAGamePoint) {
+        const newPoints = team_a_game_points + 1;
+        await updateActiveGame("team_a_game_points", newPoints);
+      } else if (isTeamBGamePoint) {
+        const newPoints = team_b_game_points + 1;
+        await updateActiveGame("team_b_game_points", newPoints);
+      }
+      // Prevent further increments until the next side-out.
+      // Immediately update the ref.
+      isGamePointUpdatableRef.current = false;
+    } else {
+      console.log("Game point stat update skipped.", { isGamePoint, isGamePointUpdatable: isGamePointUpdatableRef.current });
+    }
+    
+    // 5. Update the match record with the current game point flag.
+    await updateActiveMatch("is_game_point", isGamePoint);
+  };
+  
+  
   return  (
     <MDBox>
       <Card id="incriment-games"sx={{ width: "100%"  } }>
       <MDBox p={3} >
           <MDBox>
             <MDTypography variant="h5" textAlign="center" mb={1}>
-              {scoreData ? `Rally Controller | Game: ${scoreData.current_game}` : "...Loading"}
+              {`Rally Controller (${matchData.id}) | Game: ${matchData.current_game}`}
             </MDTypography>
           </MDBox>
           <Grid container spacing={0} pb={3}>
             <Grid item xs={12} display="flex" justifyContent="center">
               <Grid item >
-              {!isSmallScreen &&<BasicScoreBoard    />}
+              {!isSmallScreen &&<BasicScoreBoard/>}
               {isSmallScreen &&
               <MDBox>
               <MDTypography textAlign="center" variant="subtitle2">
-              {scoreData?.server === 1 || scoreData?.server === 2 
-              ? scoreData?.team_a ?? "Loading..." 
-              : scoreData?.team_b ?? "Loading..."}
+              {matchData?.server === 1 || matchData?.server === 2 
+              ? matchData?.team_a_name ?? "Loading..." 
+              : matchData?.team_b_name ?? "Loading..."}
               </MDTypography>
               <MDTypography textAlign="center" variant="h1">
-              {scoreData &&
-              scoreData[`team_a_score_game${scoreData.current_game}`] !== undefined &&
-              scoreData[`team_b_score_game${scoreData.current_game}`] !== undefined
-              ? `(${scoreData[`team_a_score_game${scoreData.current_game}`]} - ${scoreData[`team_b_score_game${scoreData.current_game}`]})`
-              : "Loading..."}
+              {`(${gameData.team_a_score} - ${gameData.team_b_score})`}
               </MDTypography>
               <MDTypography textAlign="center" variant="subtitle1">
-              {getServerLabel(scoreData?.server)}
+              {getServerLabel(matchData?.server)}
               </MDTypography>
               </MDBox>
               }
@@ -284,7 +498,7 @@ useEffect(() => {
                       fullWidth
                       size="large"
                      
-                      onClick={() => handleRallyResult(true)}
+                      onClick={() => handleRally(true)}
                       >
                       Won <br/>
                       Rally
@@ -297,7 +511,7 @@ useEffect(() => {
                       fullWidth
                       size="large"
                
-                      onClick={() => handleRallyResult(false)}
+                      onClick={() => handleRally(false)}
                       >
                       Lost<br/>
                       Rally
@@ -307,38 +521,45 @@ useEffect(() => {
             <Grid item xs={12} sm={6}>
                 <MDInput
                 fullWidth
-                label= {`Team A | Game: ${scoreData?.current_game}`}
-                value={currentTeamAScore}
-                onChange={(e) => manualUpdateScore(e.target.value, "a")}
-                inputProps={{ type: "number", autoComplete: "" }}
+                label={`Team A | Game: ${activeMatch?.current_game}`}
+                value={gameData.team_a_score}
+                onChange={(e) => updateActiveGame("team_a_score", Number(e.target.value))}                inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
             <Grid item xs={12} sm={6}>
                 <MDInput
                 fullWidth
-                label= {`Team B | Game: ${scoreData?.current_game}`}
-                value={currentTeamBScore}
-                onChange={(e) => manualUpdateScore(e.target.value, "b")}
-                inputProps={{ type: "number", autoComplete: "" }}
+                label={`Team B | Game: ${activeMatch?.current_game}`}
+                value={gameData.team_b_score}
+                onChange={(e) => updateActiveGame("team_b_score", Number(e.target.value))}                inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid item xs={12} lg={12}>
                 <MDButton
                   variant="gradient"
                   color="dark"
                   fullWidth
-                  onClick={() => updateCurrentServer(scoreData.server === 4 ? 1 : scoreData.server + 1)}
-
+                  onClick={() => nextServer()}
                   >
                   Next Server
                 </MDButton>
               </Grid>
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={6} lg={6}>
                   <MDButton
                     variant="gradient"
                     color="dark"
                     fullWidth
-                    onClick={() => updateCurrentGame(scoreData.current_game === 5 ? 1 : scoreData.current_game + 1)}
+                    onClick={() =>changeGame(activeMatch.current_game - 1)}
+                    >
+                    Previous Game
+                  </MDButton>
+              </Grid>
+              <Grid item xs={6} lg={6}>
+                  <MDButton
+                    variant="gradient"
+                    color="dark"
+                    fullWidth
+                    onClick={() =>changeGame(activeMatch.current_game + 1)}
                     >
                     Next Game
                   </MDButton>
@@ -346,160 +567,7 @@ useEffect(() => {
               </Grid>
           </MDBox>          
         </MDBox> 
-      </Card>
-     
-       {/* -----------------------------------------
-       
-       
-       |||      MANUALLY UPDATE SCORE           |||
-       
-       
-       ------------------------------------- */}
-      <MDBox mt={3}>
-      <Card id="incriment-games" sx={{ width: "100%" } }>
-        <MDBox p={3} >
-          <MDTypography variant="h5">
-           Game Settings
-          </MDTypography>
-        </MDBox>
-        <MDBox pb={3}
-          px={3}>
-        <MDTypography pb={2}variant="subtitle2">
-          Win Conditions
-          </MDTypography>
-
-          <Grid container spacing={3}>
-
-            <Grid item xs={4} sm={4}>
-                <MDInput
-                fullWidth
-                label= "First to X"
-                value= {firstToPoints}
-                onChange={(e) => {
-                  setScoreData((prev) => {
-                    const updatedScoreData = { ...prev, first_to_points: Number(e.target.value) };
-                    handleUpdate(updatedScoreData); // Call handleUpdate with new data
-                    return updatedScoreData; // Ensure React updates state
-                  });
-                }}
-                inputProps={{ type: "number", autoComplete: "" }}
-                />
-            </Grid>
-            <Grid item xs={4} sm={4}>
-                <MDInput
-                fullWidth
-                label= "Win by X"
-                value={winBy}
-                onChange={(e) => {
-                  setScoreData((prev) => {
-                    const updatedScoreData = { ...prev, win_by: Number(e.target.value) };
-                    handleUpdate(updatedScoreData); // Call handleUpdate with new data
-                    return updatedScoreData; // Ensure React updates state
-                  });
-                }}
-                inputProps={{ type: "number", autoComplete: "" }}
-                />
-            </Grid>
-            <Grid item xs={4} sm={4}>
-                <MDInput
-                fullWidth
-                label= "Best of X"
-                value={bestOf}
-                onChange={(e) => {
-                  setScoreData((prev) => {
-                    const updatedScoreData = { ...prev, best_of: Number(e.target.value) };
-                    handleUpdate(updatedScoreData); // Call handleUpdate with new data
-                    return updatedScoreData; // Ensure React updates state
-                  });
-                }}
-                inputProps={{ type: "number", autoComplete: "" }}
-                />
-            </Grid>
-            
-              <Grid item xs={12} lg={6}>
-                <MDButton
-                variant="gradient"
-                color="dark"
-                fullWidth
-                onClick={handleUpdateAndClear}>
-                Clear Match
-                </MDButton>
-            </Grid>
-          </Grid>
-        </MDBox>
-      </Card>   
-      </MDBox>
-       {/* -----------------------------------------
-       
-       
-       |||      BASIC INFORMATION SECTION           |||
-       
-       
-       ------------------------------------- */}
-      <MDBox mt={3}>
-      <Card id="incriment-games" sx={{ width: "100%" } }>
-        <MDBox p={3} >
-          <MDTypography variant="h5">
-          Basic Event Information
-          </MDTypography>
-        </MDBox>
-        <MDBox
-          component="form"
-          pb={3}
-          px={3}
-          onSubmit={handleUpdate}
-        >
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-                <MDInput
-                fullWidth
-                label="Tournament Name"
-                value={scoreData?.tournament_name || ""}
-                onChange={(e) => setScoreData((prev) => ({ ...prev, tournament_name: e.target.value }))}
-                inputProps={{ type: "text", autoComplete: "" }}
-                />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <MDInput
-                fullWidth
-                label="Match Title"
-                value={scoreData?.match_title || ""}
-                onChange={(e) => setScoreData((prev) => ({ ...prev, match_title: e.target.value }))}
-                inputProps={{ type: "text", autoComplete: "" }}
-                />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <MDInput
-                fullWidth
-                label="(A) Team Name"
-                value={scoreData?.team_a || ""}
-                onChange={(e) => setScoreData((prev) => ({ ...prev, team_a: e.target.value }))}
-                inputProps={{ type: "text", autoComplete: "" }}
-                />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-                <MDInput
-                fullWidth
-                label="(B) Team Name"
-                value={scoreData?.team_b || ""}
-                onChange={(e) => setScoreData((prev) => ({ ...prev, team_b: e.target.value }))}
-                inputProps={{ type: "text", autoComplete: "" }}
-                />
-            </Grid>
-            <Grid item xs={3}>
-                <MDButton
-                variant="gradient"
-                color="dark"
-                fullWidth
-                type="submit"
-                >
-                Update
-                </MDButton>
-            </Grid>
-          </Grid>
-        </MDBox>
-      </Card>   
-      </MDBox>                                                         
+      </Card>                                                          
     </MDBox>
 );
 };

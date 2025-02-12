@@ -21,9 +21,9 @@ import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 
 // Layout components
 
-import RallyController2 from "/pagesComponents/pages/score-logging/rally-controller-2";
+import RallyControllerOld from "/pagesComponents/pages/score-logging/rally-controller-old";
 
-const RallyControllerDash2 = () => {
+const RallyControllerDashOld = () => {
 
   return (
     <DashboardLayout>
@@ -31,7 +31,7 @@ const RallyControllerDash2 = () => {
       <MDBox>
         <Grid container spacing={1}>
           <Grid item xs={12} lg={12} >
-            <RallyController2  />
+            <RallyControllerOld  />
           </Grid>
         </Grid>
       </MDBox>
@@ -41,4 +41,4 @@ const RallyControllerDash2 = () => {
 
 
 
-export default RallyControllerDash2;
+export default RallyControllerDashOld;
