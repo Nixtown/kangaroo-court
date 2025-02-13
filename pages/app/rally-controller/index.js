@@ -20,7 +20,7 @@ import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 
 
 // Layout components
-import RallyController from "/pagesComponents/pages/score-logging/rally-controller";
+import RallyControllerWConfig from "/pagesComponents/pages/score-logging/rally-controller-w-config";
 
 const RallyControllerDash = () => {
 
@@ -30,7 +30,7 @@ const RallyControllerDash = () => {
       <MDBox>
         <Grid container spacing={1}>
           <Grid item xs={12} lg={12} >
-            <RallyController/>
+            <RallyControllerWConfig/>
           </Grid>
         </Grid>
       </MDBox>

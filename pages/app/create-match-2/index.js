@@ -31,7 +31,6 @@ const CreateMatch2 = () => {
         created_by: "11111111-1111-1111-1111-111111111111",
         active_match: true, 
         current_game: 1,
-        server: 2,
     });
 
     // Default Game Conditions //
@@ -105,6 +104,7 @@ const CreateMatch2 = () => {
             scoring_type: game.scoring_type,
             win_on_serve: game.win_on_serve,
             point_cap: game.point_cap,
+            server: 2,
             }));
 
             // Insert the gameData array into the 'game_stats' table
