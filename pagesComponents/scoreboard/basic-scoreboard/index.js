@@ -18,15 +18,59 @@ export default function BasicScoreBoard() {
         game_number: 1, 
         team_a_game_points: 0, 
         team_b_game_points: 0,
+        server: 2,
+        scoring_type: "Rally"
      }];
   const matchData = activeMatch ?? { tournament_name: "..loading", current_game: 1, match_title: "Loading...", team_a_name: "Team A", team_b_name: "Team B" };
-  const currentServer = matchData.server ?? 2;
-  const currentGamePoints =
-    gamesData[matchData.current_game - 1]?.[
-      (currentServer === 1 || currentServer === 2)
-        ? "team_a_game_points"
-        : "team_b_game_points"
-    ] || 0;
+  const currentServer =
+    activeMatch && 
+    gamesData && 
+    gamesData.length >= activeMatch.current_game &&
+    gamesData[activeMatch.current_game - 1]
+      ? gamesData[activeMatch.current_game - 1].server
+      : 2;
+
+
+    const defaultGame = {
+      team_a_score: 0,
+      team_b_score: 0,
+      game_number: 1,
+      team_a_game_points: 0,
+      team_b_game_points: 0,
+      server: 2,
+      scoring_type: "Rally",
+      is_game_point_updatable: true,  // if you need this flag as well
+      side_out_count: 0,
+      is_game_point: false              // if you are tracking side-outs
+    };
+    
+    const currentGame =
+      activeMatch &&
+      gamesData &&
+      gamesData.length >= activeMatch.current_game
+        ? gamesData[activeMatch.current_game - 1]
+        : defaultGame;
+
+    const currentGamePoints = (() => {
+      if (currentGame.scoring_type === "Rally") {
+        // In Rally scoring: server 1 belongs to TeamA and server 2 belongs to TeamB.
+        if (currentGame.server === 1) {
+          return currentGame.team_a_game_points || 0;
+        } else if (currentGame.server === 2) {
+          return currentGame.team_b_game_points || 0;
+        }
+      } else {
+        // In Regular scoring: servers 1 and 2 are TeamA, servers 3 and 4 are TeamB.
+        if (currentGame.server === 1 || currentGame.server === 2) {
+          return currentGame.team_a_game_points || 0;
+        } else if (currentGame.server === 3 || currentGame.server === 4) {
+          return currentGame.team_b_game_points || 0;
+        }
+      }
+      return 0;
+    })();
+    
+  
 
 
   
@@ -208,18 +252,13 @@ export default function BasicScoreBoard() {
                         {matchData.team_a_name}
                       </MDTypography>
                     </Grid>
-                    <Grid display="flex" alignItems="center" sx={{ width: "69px", marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>
-                      <MDBox id="serverbox" sx={{width: "12px", bgcolor: "black"}}>
-                        <MDBox id="server1"
-                            sx={{
-                              width: 12,
-                              height: 12,
-                              borderRadius: "50%",
-                              backgroundColor: "#03b403",
-                              display: (currentServer === 1 || currentServer === 2) ? "default" : "none",    
-                            }}
-                          />
-                      </MDBox>
+
+
+            
+
+                    {currentGame.scoring_type === "Rally" ? (  
+
+                    <Grid display="flex" alignItems="center" sx={{ width: "50px", marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>   
                       <MDBox sx={{width: "12px"}}>
                         <MDBox id="server2"
                             sx={{
@@ -227,11 +266,40 @@ export default function BasicScoreBoard() {
                               height: 12,
                               borderRadius: "50%",
                               backgroundColor: "#03b403",
-                              display: currentServer === 2 ? "default" : "none",
+                              display: currentServer === 1 ? "default" : "none",
                             }}
                           />
                       </MDBox>
                     </Grid>
+
+                    ) : (
+                    
+
+                    <Grid display="flex" alignItems="center" sx={{ width: "69px", marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>
+                    <MDBox id="serverbox" sx={{width: "12px", bgcolor: "black"}}>
+                      <MDBox id="server1"
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor: "#03b403",
+                            display: (currentServer === 1 || currentServer === 2) ? "default" : "none",    
+                          }}
+                        />
+                    </MDBox>
+                    <MDBox sx={{width: "12px"}}>
+                      <MDBox id="server2"
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor: "#03b403",
+                            display: currentServer === 2 ? "default" : "none",
+                          }}
+                        />
+                    </MDBox>
+                  </Grid>
+                  )}
                   </Grid>
                   <Grid display="flex">
                     <Grid>
@@ -246,18 +314,10 @@ export default function BasicScoreBoard() {
                         {matchData.team_b_name}
                       </MDTypography>
                     </Grid>
-                    <Grid display="flex" alignItems="center" sx={{ marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>
-                    <MDBox id="serverbox" sx={{width: "12px", bgcolor: "black"}}>
-                        <MDBox id="server1"
-                            sx={{
-                              width: 12,
-                              height: 12,
-                              borderRadius: "50%",
-                              backgroundColor: "#03b403",
-                              display: (currentServer === 3 || currentServer === 4) ? "default" : "none",                          
-                            }}
-                          />
-                      </MDBox>
+
+                    {currentGame.scoring_type === "Rally" ? (  
+
+                    <Grid display="flex" alignItems="center" sx={{ width: "50px", marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>   
                       <MDBox sx={{width: "12px"}}>
                         <MDBox id="server2"
                             sx={{
@@ -265,22 +325,59 @@ export default function BasicScoreBoard() {
                               height: 12,
                               borderRadius: "50%",
                               backgroundColor: "#03b403",
-                              display: currentServer === 4 ? "default" : "none",
+                              display: currentServer === 2 ? "default" : "none",
                             }}
                           />
                       </MDBox>
                     </Grid>
+
+                    ) : (
+
+
+                    <Grid display="flex" alignItems="center" sx={{ width: "69px", marginLeft: "auto", gap: "6px", padding: "0 9px 0 30px"}}>
+                    <MDBox id="serverbox" sx={{width: "12px", bgcolor: "black"}}>
+                      <MDBox id="server1"
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor: "#03b403",
+                            display: (currentServer === 3 || currentServer === 4) ? "default" : "none",    
+                          }}
+                        />
+                    </MDBox>
+                    <MDBox sx={{width: "12px"}}>
+                      <MDBox id="server2"
+                          sx={{
+                            width: 12,
+                            height: 12,
+                            borderRadius: "50%",
+                            backgroundColor: "#03b403",
+                            display: currentServer === 4 ? "default" : "none",
+                          }}
+                        />
+                    </MDBox>
+                    </Grid>
+                    )}
                   </Grid>
                 </MDBox>
               </Grid>
               {/* ----------------  SCORE NODES  ---------------- */}              
-              {gamesData.map((game, index) => (
+              {/* {gamesData.map((game, index) => (
               <BasicScoreNode
                 key={game.game_number}
                 teamAScore={game.team_a_score}
                 teamBScore={game.team_b_score}
                 isCurrentGame={index === gamesData.length - 1}
               />
+            ))} */}
+            {gamesData.slice(0, matchData.current_game).map((game, index) => (
+            <BasicScoreNode
+              key={game.game_number}
+              teamAScore={game.team_a_score}
+              teamBScore={game.team_b_score}
+              isCurrentGame={index === matchData.current_game - 1}
+            />
             ))}
 
 
@@ -307,7 +404,7 @@ export default function BasicScoreBoard() {
                          {activeMatch?.match_title.toString().toUpperCase() || ''}
                 </MDTypography>
             </MDBox>
-            {matchData.is_game_point && (
+            {currentGame.is_game_point && (
             <MDBox
             sx={{
               bgcolor: "#ffffff",

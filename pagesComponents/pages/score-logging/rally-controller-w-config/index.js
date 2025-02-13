@@ -64,6 +64,47 @@ const RallyControllerWConfig = () => {
     fetchGameStats();
   }, [matchData]);
 
+  // Update the Games In SupaBase
+  const updateGameDataInSupabase = async (updatedGameData) => {
+    const { data, error } = await supabase
+      .from('game_stats')
+      .upsert(updatedGameData); // requires each object to include its unique id
+  
+    if (error) {
+      console.error("Error updating game stats:", error);
+    } else {
+      console.log("Game stats updated successfully:", data);
+    }
+  };
+
+  const handleChangeGame = async (delta) => {
+    // Calculate the new game number
+    const newGameNumber = matchData.current_game + delta;
+  
+    // Check boundaries: ensure it doesn't go below 1 or above best_of
+    if (newGameNumber < 1 || newGameNumber > matchData.best_of) {
+      console.log("Game number out of bounds.");
+      return;
+    }
+  
+    // Only update if there's an actual change
+    if (newGameNumber !== matchData.current_game) {
+      const { data, error } = await supabase
+        .from('matches')
+        .update({ current_game: newGameNumber })
+        .eq('id', matchData.id);
+  
+      if (error) {
+        console.error("Error updating match current_game:", error);
+      } else {
+        setMatchData(prev => ({ ...prev, current_game: newGameNumber }));
+      }
+    }
+  };
+  
+
+
+
 
   const handleRally = (rallyWon) => {
     // Determine the current game index from matchData (assuming current_game is 1-indexed)
@@ -84,6 +125,9 @@ const RallyControllerWConfig = () => {
     
     // Update the gameData state with the new data.
     setGameData(updatedGameData);
+
+    // Update Supabase with the new game data
+    updateGameDataInSupabase(updatedGameData);
   };
     
     
@@ -95,12 +139,20 @@ const RallyControllerWConfig = () => {
     let currentGame = { ...gameData[currentGameIndex] };
 
 
+    // Step 5: Perform server rotation logic
+    if (rallyWinner !== servingTeam) {
+      currentGame = getNextServerInRotation(currentGame);
+    }
+
+
     // Step 3: Check win_on_serve rule before awarding a point.
     // If win_on_serve is true, and the rally winner is not the serving team,
     // and if the rally winner is at game point, then no point is awarded.
     if (currentGame.win_on_serve && rallyWinner !== servingTeam && isGamePoint(currentGame, rallyWinner)) {
       // Do not award a point—simply proceed to server rotation.
       // (Optionally, you might log or update a stat indicating that a rally point was lost due to the rule.)
+
+
     } else {
       // Step 4: Process the rally based on the scoring type
       if (currentGame.scoring_type === 'Rally') {
@@ -108,14 +160,32 @@ const RallyControllerWConfig = () => {
       } else if (currentGame.scoring_type === 'Regular') {
         currentGame = handleRegularScoring(currentGame, rallyWinner, servingTeam);
       }
+        // Check if it's game point and update them.
+        updateGamePoints(currentGame, getServingTeam(currentGame))
+
     }
 
-    // Step 5: Perform server rotation logic
-    if (rallyWinner !== servingTeam) {
-      currentGame = getNextServerInRotation(currentGame);
+   
+
+    // Check if we are on game point
+    currentGame.is_game_point = isGamePoint(currentGame, getServingTeam(currentGame))
+
+    if(currentGame.is_game_point)
+    {
+      toast.info(
+        "The serving team is on game point!",
+        {
+          position: "top-center", // Positions the toast at the top center
+          autoClose: 3000,        // Auto-closes after 3 seconds
+          hideProgressBar: false, // Displays the progress bar
+          closeOnClick: true,     // Allows dismissal on click
+          pauseOnHover: true,     // Pauses autoClose timer when hovered
+          draggable: true,        // Enables dragging to dismiss
+          theme: "dark",       // Uses the "colored" theme for a vibrant look
+          style: { width: "100%", maxWidth: "500px" },
+        }
+      );
     }
-    // Check if it's game point and update them.
-    updateGamePoints(currentGame, getServingTeam(currentGame))
 
     // Step 6: Check overall win conditions (e.g., reaching target score with required win margin)
     currentGame = checkWinConditions(currentGame);
@@ -187,6 +257,50 @@ const RallyControllerWConfig = () => {
     return game;
   }
 
+  const handleCycleServer = async () => {
+    // Validate that matchData and gameData exist and the index is valid.
+    if (!matchData || !gameData || gameData.length < matchData.current_game) {
+      console.error("Data not loaded or invalid");
+      return;
+    }
+    
+    // Determine the current game index (matchData.current_game is assumed to be 1-indexed)
+    const currentGameIndex = matchData.current_game - 1;
+    
+    // Clone the current game so we don't mutate state directly.
+    let updatedGame = { ...gameData[currentGameIndex] };
+    
+    // Cycle the server inline:
+    const previousServer = updatedGame.server;
+    let newServer;
+    if (updatedGame.scoring_type === "Rally") {
+      // For rally scoring, cycle between 1 and 2.
+      newServer = (previousServer % 2) + 1;
+    } else {
+      // For regular scoring, cycle through 1 to 4.
+      newServer = (previousServer % 4) + 1;
+    }
+    updatedGame.server = newServer;
+    
+    // Update the local gameData state.
+    const newGameData = [...gameData];
+    newGameData[currentGameIndex] = updatedGame;
+    setGameData(newGameData);
+    
+    // Update the game record in Supabase.
+    const { data, error } = await supabase
+      .from('game_stats')
+      .update(updatedGame)
+      .eq('id', updatedGame.id);
+      
+    if (error) {
+      console.error("Error updating game server:", error);
+    } else {
+      console.log("Game server updated successfully:", data);
+    }
+  };
+  
+  
   
   function getServingTeam(game) {
     // For rally scoring, we assume only two valid server numbers: 1 and 2.
@@ -248,7 +362,6 @@ const RallyControllerWConfig = () => {
     } else {
       return false;
     }
-    // console.log("Game Point Target: ", target)
 
     // The team is at game point if its score is exactly one less than the target.
     return teamScore === target - 1;
@@ -262,19 +375,33 @@ const RallyControllerWConfig = () => {
     // Check if Team A has reached or exceeded its target score.
     if (game.team_a_score >= targetA) {
       game.game_completed = true;
-      game.winner = "TeamA";
+      game.winner = 1;
       console.log("Game Won By: TeamA")
     } 
     // Otherwise, check if Team B has reached or exceeded its target score.
     else if (game.team_b_score >= targetB) {
       game.game_completed = true;
-      game.winner = "TeamB";
+      game.winner = 2;
       console.log("Game Won By: TeamB")
     } 
     // Otherwise, the game continues.
     else {
       game.game_completed = false;
       game.winner = null;
+    }
+
+    // If the game is completed, display the toast notification.
+    if (game.game_completed) {
+      toast.success("Game complete. Final score recorded.", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "dark",
+        style: { width: "100%", maxWidth: "500px" },
+      });
     }
     
     return game;
@@ -325,7 +452,7 @@ const RallyControllerWConfig = () => {
       <MDBox p={3} >
           <MDBox>
             <MDTypography variant="h5" textAlign="center" mb={1}>
-              {`Rally Controller | Game: ${matchData.current_game}`}
+              {`Best of ${matchData.best_of} | Game: ${matchData.current_game}`}
             </MDTypography>
           </MDBox>
           <Grid container spacing={0} pb={3}>
@@ -403,7 +530,7 @@ const RallyControllerWConfig = () => {
                   variant="gradient"
                   color="dark"
                   fullWidth
-                  // onClick={() => nextServer()}
+                  onClick={handleCycleServer}
                   >
                   Next Server
                 </MDButton>
@@ -413,7 +540,8 @@ const RallyControllerWConfig = () => {
                     variant="gradient"
                     color="dark"
                     fullWidth
-                    // onClick={() =>changeGame(activeMatch.current_game - 1)}
+                    disabled={matchData.current_game === 1}
+                    onClick={() => handleChangeGame(-1)}
                     >
                     Previous Game
                   </MDButton>
@@ -423,7 +551,8 @@ const RallyControllerWConfig = () => {
                     variant="gradient"
                     color="dark"
                     fullWidth
-                    // onClick={() =>changeGame(activeMatch.current_game + 1)}
+                    disabled={matchData.current_game === matchData.best_of}
+                    onClick={() => handleChangeGame(+1)}
                     >
                     Next Game
                   </MDButton>
