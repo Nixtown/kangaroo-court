@@ -53,14 +53,17 @@ export default function BasicScoreBoard() {
 
     const currentGamePoints = (() => {
       if (currentGame.scoring_type === "Rally") {
-        // In Rally scoring: server 1 belongs to TeamA and server 2 belongs to TeamB.
-        if (currentGame.server === 1) {
+        // Compare the team scores to decide which team's game points to show.
+        if (currentGame.team_a_score > currentGame.team_b_score) {
           return currentGame.team_a_game_points || 0;
-        } else if (currentGame.server === 2) {
+        } else if (currentGame.team_b_score > currentGame.team_a_score) {
           return currentGame.team_b_game_points || 0;
+        } else {
+          // If scores are tied, you might choose one or return a default.
+          return currentGame.team_a_game_points || 0;
         }
       } else {
-        // In Regular scoring: servers 1 and 2 are TeamA, servers 3 and 4 are TeamB.
+        // For Regular scoring, use the server to determine which team's game points to show.
         if (currentGame.server === 1 || currentGame.server === 2) {
           return currentGame.team_a_game_points || 0;
         } else if (currentGame.server === 3 || currentGame.server === 4) {
@@ -69,7 +72,10 @@ export default function BasicScoreBoard() {
       }
       return 0;
     })();
-    
+      
+      
+    // Team B: 1, 2
+    // Team A: 
   
 
 

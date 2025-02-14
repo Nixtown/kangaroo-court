@@ -196,31 +196,63 @@ const CreateMatch = () => {
                                     inputProps={{ type: "text", autoComplete: "" }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={12}>
+                                <Grid item xs={12} sm={2} md={2}>
                                     <MDInput
                                     fullWidth
                                     label="Best Of"
                                     value={matchData.best_of}
                                     required
-                                    onChange={e =>
-                                        setMatchData({ ...matchData, best_of: parseInt(e.target.value, 10)})
-                                        }
+                                    onChange={e => {
+                                        const newValue = Math.min(7, Math.max(1, parseInt(e.target.value, 10) || 1));
+                                        setMatchData({ ...matchData, best_of: newValue });
+                                      }}
                                     inputProps={{ type: "number", autoComplete: "" }}
                                     />
                                 </Grid>
+                           
                             {/* ////// *************************** ///// */}
 
                             {/* ////// This is the mapping section ///// */}
 
                             {/* ////// *************************** ///// */}
                         {gameData.map((game, index) => (
-                            <Grid container spacing={3} pt={3} px={3} key={game.id || game.game_number || index}>
+                            <Grid container spacing={3} pt={3} pb={3} px={3} key={game.id || game.game_number || index}>
                                 <Grid item xs={12} sm={12}>
-                                    <MDTypography variant="body">
+                                <Grid container  sx={{bgcolor:"#f1f5ff", paddingLeft: "0px", borderRadius: "0.4rem"}}>
+                                    <MDTypography variant="body" >
                                         Game: {index + 1}
                                     </MDTypography>
+                                           {/* Only show the "Win On Serve" switch if scoring_type is NOT "Rally" */}
+
+                                 {game.scoring_type === "Rally" && (
+                            
+                                    <MDBox
+                                    display="flex"
+                                    justifyContent={{ md: "flex-start" }}
+                                    alignItems="center"
+                                    lineHeight={1}
+                                    >
+                                    
+                                    <MDBox ml={1}>
+                                        <Switch 
+                                            checked={game.win_on_serve}
+                                            onChange={(e) =>
+                                              updateGameField(index, 'win_on_serve', e.target.checked)
+                                            }
+                                        />
+                                    </MDBox>
+                                    <MDTypography variant="caption" fontWeight="regular">
+                                        {game.win_on_serve ? "Win Only On Serve" : "No Serve Condition"}
+                                    </MDTypography>
+                                    </MDBox>
+                             
+                                )}
+
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                </Grid>
+
+                         
+                                <Grid item xs={12} sm={3}>
                                     <Autocomplete
                                         value={game.scoring_type} // controlled value
                                         onChange={(event, newValue) =>
@@ -237,27 +269,7 @@ const CreateMatch = () => {
                                         )}
                                     />
                                 </Grid>
-                                <Grid item xs={6} lg={6} sx={{ ml: "auto" }}>
-                                    <MDBox
-                                    display="flex"
-                                    justifyContent={{ md: "flex-end" }}
-                                    alignItems="center"
-                                    lineHeight={1}
-                                    >
-                                    <MDTypography variant="caption" fontWeight="regular">
-                                        {game.win_on_serve ? "Win Only On Serve" : "No Serve Condition"}
-                                    </MDTypography>
-                                    <MDBox ml={1}>
-                                        <Switch 
-                                            checked={game.win_on_serve}
-                                            onChange={(e) =>
-                                              updateGameField(index, 'win_on_serve', e.target.checked)
-                                            }
-                                        />
-                                    </MDBox>
-                                    </MDBox>
-                                </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={3}>
                                     <MDInput
                                         fullWidth
                                         label="First to Points"
@@ -269,7 +281,7 @@ const CreateMatch = () => {
                                         inputProps={{ type: "number", autoComplete: "" }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={3}>
                                     <MDInput
                                         fullWidth
                                         label="Win By"
@@ -281,7 +293,7 @@ const CreateMatch = () => {
                                         inputProps={{ type: "number", autoComplete: "" }}
                                     />
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid item xs={12} sm={3}>
                                     <MDInput
                                         fullWidth
                                         label="Point Cap"

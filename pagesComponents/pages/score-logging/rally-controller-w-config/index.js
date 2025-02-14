@@ -157,23 +157,33 @@ const RallyControllerWConfig = () => {
       // Step 4: Process the rally based on the scoring type
       if (currentGame.scoring_type === 'Rally') {
         currentGame = handleRallyScoring(currentGame, rallyWinner, servingTeam);
+           // Check if it's game point and update them.
+           updateGamePoints(currentGame, "TeamA")
+           // Check if it's game point and update them.
+           updateGamePoints(currentGame, "TeamB")
       } else if (currentGame.scoring_type === 'Regular') {
         currentGame = handleRegularScoring(currentGame, rallyWinner, servingTeam);
+           // Check if it's game point and update them.
+           updateGamePoints(currentGame, getServingTeam(currentGame))
+     
       }
-        // Check if it's game point and update them.
-        updateGamePoints(currentGame, getServingTeam(currentGame))
-
     }
 
    
-
-    // Check if we are on game point
-    currentGame.is_game_point = isGamePoint(currentGame, getServingTeam(currentGame))
+    if (currentGame.scoring_type === "Rally" && !currentGame.win_on_serve) {
+      // In rally scoring with win_on_serve false, game point is true if either team is 1 point away.
+      currentGame.is_game_point =
+        isGamePoint(currentGame, "TeamA") || isGamePoint(currentGame, "TeamB");
+    } else {
+      // Otherwise, check if the serving team is at game point.
+      currentGame.is_game_point = isGamePoint(currentGame, getServingTeam(currentGame));
+    }
+    
 
     if(currentGame.is_game_point)
     {
       toast.info(
-        "The serving team is on game point!",
+        "Game point!",
         {
           position: "top-center", // Positions the toast at the top center
           autoClose: 3000,        // Auto-closes after 3 seconds
@@ -214,17 +224,42 @@ const RallyControllerWConfig = () => {
     return game;
   }
 
+  // function handleRallyScoring(game, rallyWinner) {
+  //   // In rally scoring, a point is awarded to the winning team of the rally.
+  //   if (rallyWinner === "TeamA") {
+  //     game.team_a_score = (game.team_a_score || 0) + 1;
+  //   } else if (rallyWinner === "TeamB") {
+  //     game.team_b_score = (game.team_b_score || 0) + 1;
+  //   }
+    
+  //   game.is_game_point_updatable = true;
+  //   // Return the updated game state.
+  //   return game;
+  // }
+
   function handleRallyScoring(game, rallyWinner) {
-    // In rally scoring, a point is awarded to the winning team of the rally.
+    // Calculate the lead before awarding the point.
+    // Using Math.sign returns -1 if TeamB is leading, 1 if TeamA is leading, and 0 if tied.
+    const prevLead = Math.sign((game.team_a_score || 0) - (game.team_b_score || 0));
+    
+    // Award the point to the winning team.
     if (rallyWinner === "TeamA") {
       game.team_a_score = (game.team_a_score || 0) + 1;
     } else if (rallyWinner === "TeamB") {
       game.team_b_score = (game.team_b_score || 0) + 1;
     }
     
-    // Return the updated game state.
+    // Calculate the new lead after the point.
+    const newLead = Math.sign(game.team_a_score - game.team_b_score);
+    
+    // If the lead has changed, set is_game_point_updatable to true.
+    if (prevLead !== newLead) {
+      game.is_game_point_updatable = true;
+    }
+    
     return game;
   }
+  
 
   function getNextServerInRotation(game) {
     // Capture the previous server from the game object.
@@ -244,7 +279,7 @@ const RallyControllerWConfig = () => {
     const newTeam = getServingTeam({ ...game, server: newServer });
 
     // If the serving team changed, it's a side-out.
-    if (previousTeam !== newTeam) {
+    if (game.scoring_type === "Regular" && previousTeam !== newTeam) {
       game.is_game_point_updatable = true;
       game.side_out_count = (game.side_out_count || 0) + 1;
       console.log("Side Out Count: ", game.side_out_count)
@@ -411,6 +446,8 @@ const RallyControllerWConfig = () => {
     if (game.scoring_type === 'Rally') {
       // For rally scoring, award a game point regardless of rally outcome.
       // Check if TeamA is at game point.
+
+      console.log("Is game point updatable?", game.is_game_point_updatable)
       if (game.is_game_point_updatable && isGamePoint(game, "TeamA")) {
         game.team_a_game_points = (game.team_a_game_points || 0) + 1;
         game.is_game_point_updatable = false;
