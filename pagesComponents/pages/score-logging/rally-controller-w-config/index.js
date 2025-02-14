@@ -73,9 +73,32 @@ const RallyControllerWConfig = () => {
     if (error) {
       console.error("Error updating game stats:", error);
     } else {
-      console.log("Game stats updated successfully:", data);
+      // console.log("Game stats updated successfully:", data);
     }
   };
+
+  const handleScoreChange = (teamKey, newValue) => {
+    // Ensure the value is a valid number
+    const score = Math.max(0, parseInt(newValue, 10) || 0);
+  
+    // Determine the current game index
+    const currentGameIndex = matchData.current_game - 1;
+  
+    // Clone the current game so we don’t mutate state directly
+    let updatedGame = { ...gameData[currentGameIndex], [teamKey]: score, game_completed: false };
+  
+    // Update local state
+    const newGameData = [...gameData];
+    newGameData[currentGameIndex] = updatedGame;
+    setGameData(newGameData);
+  
+    // Update the database
+    updateGameDataInSupabase(updatedGame);
+  };
+  
+
+
+
 
   const handleChangeGame = async (delta) => {
     // Calculate the new game number
@@ -157,28 +180,50 @@ const RallyControllerWConfig = () => {
       // Step 4: Process the rally based on the scoring type
       if (currentGame.scoring_type === 'Rally') {
         currentGame = handleRallyScoring(currentGame, rallyWinner, servingTeam);
-           // Check if it's game point and update them.
-           updateGamePoints(currentGame, "TeamA")
-           // Check if it's game point and update them.
-           updateGamePoints(currentGame, "TeamB")
+   
       } else if (currentGame.scoring_type === 'Regular') {
         currentGame = handleRegularScoring(currentGame, rallyWinner, servingTeam);
            // Check if it's game point and update them.
-           updateGamePoints(currentGame, getServingTeam(currentGame))
+      
      
       }
     }
 
-   
-    if (currentGame.scoring_type === "Rally" && !currentGame.win_on_serve) {
-      // In rally scoring with win_on_serve false, game point is true if either team is 1 point away.
-      currentGame.is_game_point =
-        isGamePoint(currentGame, "TeamA") || isGamePoint(currentGame, "TeamB");
-    } else {
-      // Otherwise, check if the serving team is at game point.
-      currentGame.is_game_point = isGamePoint(currentGame, getServingTeam(currentGame));
+      // Step 6: Check overall win conditions (e.g., reaching target score with required win margin)
+      currentGame = checkWinConditions(currentGame);
+
+
+    // If the score is now tied it can never be game point.
+    if(currentGame.team_a_score === currentGame.team_b_score || currentGame.game_completed)
+    {
+      currentGame.is_game_point = false
     }
-    
+    else
+    {
+        // Capture whether it is game point before it's changed 
+    const prevIsGamePoint = currentGame.is_game_point;
+
+    // We set game point toggle which controls the UI on the score board but doesn't issue points
+     if (currentGame.scoring_type === "Rally" && !currentGame.win_on_serve) {
+       // In rally scoring with win_on_serve false, game point is true if either team is 1 point away.
+       currentGame.is_game_point =
+         isGamePoint(currentGame, "TeamA") || isGamePoint(currentGame, "TeamB");
+     } else {
+       // Otherwise, check if the serving team is at game point.
+       currentGame.is_game_point = isGamePoint(currentGame, getServingTeam(currentGame));
+     }
+ 
+     // If is_game_point changed from false to true, run the updateGamePoints function
+     if (!prevIsGamePoint && currentGame.is_game_point) {
+       // Optionally, you can pass in the serving team as well
+       
+       currentGame = updateGamePoints(currentGame);
+     }
+     
+    }
+      
+
+  
 
     if(currentGame.is_game_point)
     {
@@ -196,9 +241,6 @@ const RallyControllerWConfig = () => {
         }
       );
     }
-
-    // Step 6: Check overall win conditions (e.g., reaching target score with required win margin)
-    currentGame = checkWinConditions(currentGame);
 
     // Step 7: Update the current game in the gameData array with the new state
     const updatedGameData = [...gameData];
@@ -224,18 +266,7 @@ const RallyControllerWConfig = () => {
     return game;
   }
 
-  // function handleRallyScoring(game, rallyWinner) {
-  //   // In rally scoring, a point is awarded to the winning team of the rally.
-  //   if (rallyWinner === "TeamA") {
-  //     game.team_a_score = (game.team_a_score || 0) + 1;
-  //   } else if (rallyWinner === "TeamB") {
-  //     game.team_b_score = (game.team_b_score || 0) + 1;
-  //   }
-    
-  //   game.is_game_point_updatable = true;
-  //   // Return the updated game state.
-  //   return game;
-  // }
+ 
 
   function handleRallyScoring(game, rallyWinner) {
     // Calculate the lead before awarding the point.
@@ -252,10 +283,7 @@ const RallyControllerWConfig = () => {
     // Calculate the new lead after the point.
     const newLead = Math.sign(game.team_a_score - game.team_b_score);
     
-    // If the lead has changed, set is_game_point_updatable to true.
-    if (prevLead !== newLead) {
-      game.is_game_point_updatable = true;
-    }
+   
     
     return game;
   }
@@ -279,8 +307,8 @@ const RallyControllerWConfig = () => {
     const newTeam = getServingTeam({ ...game, server: newServer });
 
     // If the serving team changed, it's a side-out.
-    if (game.scoring_type === "Regular" && previousTeam !== newTeam) {
-      game.is_game_point_updatable = true;
+    if (previousTeam !== newTeam) {
+   
       game.side_out_count = (game.side_out_count || 0) + 1;
       console.log("Side Out Count: ", game.side_out_count)
     }
@@ -416,6 +444,7 @@ const RallyControllerWConfig = () => {
     // Otherwise, check if Team B has reached or exceeded its target score.
     else if (game.team_b_score >= targetB) {
       game.game_completed = true;
+      game.is_game_point = false;
       game.winner = 2;
       console.log("Game Won By: TeamB")
     } 
@@ -442,39 +471,53 @@ const RallyControllerWConfig = () => {
     return game;
   }
 
-  function updateGamePoints(game, servingTeam) {
-    if (game.scoring_type === 'Rally') {
-      // For rally scoring, award a game point regardless of rally outcome.
-      // Check if TeamA is at game point.
+  // function updateGamePoints(game, servingTeam) {
+  //   if (game.scoring_type === 'Rally') {
+  //     // For rally scoring, award a game point regardless of rally outcome.
+  //     // Check if TeamA is at game point.
 
-      console.log("Is game point updatable?", game.is_game_point_updatable)
-      if (game.is_game_point_updatable && isGamePoint(game, "TeamA")) {
-        game.team_a_game_points = (game.team_a_game_points || 0) + 1;
-        game.is_game_point_updatable = false;
-        console.log("New Game Point Team A: ", game.team_a_game_points);
-      }
-      // Check if TeamB is at game point.
-      else if (game.is_game_point_updatable && isGamePoint(game, "TeamB")) {
-        game.team_b_game_points = (game.team_b_game_points || 0) + 1;
-        game.is_game_point_updatable = false;
-        console.log("New Game Point Team B: ", game.team_b_game_points);
-      }
-    } else {
-      // For regular scoring, only award a game point if the serving team is at game point.
-      if (game.is_game_point_updatable && isGamePoint(game, servingTeam)) {
-        if (servingTeam === "TeamA") {
-          game.team_a_game_points = (game.team_a_game_points || 0) + 1;
-          console.log("New Game Point Team A: ", game.team_a_game_points);
-        } else if (servingTeam === "TeamB") {
-          game.team_b_game_points = (game.team_b_game_points || 0) + 1;
-          console.log("New Game Point Team B: ", game.team_b_game_points);
-        }
-        game.is_game_point_updatable = false;
-      }
-    }
+  //     console.log("Is game point updatable?", game.is_game_point_updatable)
+  //     if (game.is_game_point_updatable && isGamePoint(game, "TeamA")) {
+  //       game.team_a_game_points = (game.team_a_game_points || 0) + 1;
+  //       game.is_game_point_updatable = false;
+  //       console.log("New Game Point Team A: ", game.team_a_game_points);
+  //     }
+  //     // Check if TeamB is at game point.
+  //     else if (game.is_game_point_updatable && isGamePoint(game, "TeamB")) {
+  //       game.team_b_game_points = (game.team_b_game_points || 0) + 1;
+  //       game.is_game_point_updatable = false;
+  //       console.log("New Game Point Team B: ", game.team_b_game_points);
+  //     }
+  //   } else {
+  //     // For regular scoring, only award a game point if the serving team is at game point.
+  //     if (game.is_game_point_updatable && isGamePoint(game, servingTeam)) {
+  //       if (servingTeam === "TeamA") {
+  //         game.team_a_game_points = (game.team_a_game_points || 0) + 1;
+  //         console.log("New Game Point Team A: ", game.team_a_game_points);
+  //       } else if (servingTeam === "TeamB") {
+  //         game.team_b_game_points = (game.team_b_game_points || 0) + 1;
+  //         console.log("New Game Point Team B: ", game.team_b_game_points);
+  //       }
+  //       game.is_game_point_updatable = false;
+  //     }
+  //   }
     
+  //   return game;
+  // }
+
+  function updateGamePoints(game) {
+ 
+    if (game.team_a_score > game.team_b_score) {
+      game.team_a_game_points = (game.team_a_game_points || 0) + 1;
+      console.log("Awarded game point to Team A");
+    } else if (game.team_b_score > game.team_a_score) {
+      game.team_b_game_points = (game.team_b_game_points || 0) + 1;
+      console.log("Awarded game point to Team B");
+    }
+  
     return game;
   }
+  
   
 
 
@@ -548,8 +591,8 @@ const RallyControllerWConfig = () => {
                 <MDInput
                 fullWidth
                 label={`${matchData.team_a_name} | Game: ${matchData.current_game}`}
-                value=""
-                // onChange={(e) => updateActiveGame("team_a_score", Number(e.target.value))}
+                value={gameData[matchData.current_game - 1]?.team_a_score || ""}
+                onChange={(e) => handleScoreChange("team_a_score", e.target.value)}
                 inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
@@ -557,8 +600,8 @@ const RallyControllerWConfig = () => {
                 <MDInput
                 fullWidth
                 label={`${matchData.team_b_name} | Game: ${matchData.current_game}`}
-                value=""
-                // onChange={(e) => updateActiveGame("team_b_score", Number(e.target.value))}
+                value={gameData[matchData.current_game - 1]?.team_b_score || ""}
+                onChange={(e) => handleScoreChange("team_b_score", e.target.value)}
                 inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>

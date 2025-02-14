@@ -61,11 +61,6 @@ const routes = [
           name: "Rally Controller",
           key: "profile-overview",
           route: "/app/rally-controller",
-        },
-        {
-          name: "OBS Output",
-          key: "obs-out",
-          route: "/scoreboards/basic",
         }
       ],
     },
@@ -290,18 +285,23 @@ const routes = [
   //   ],
   // },
   { type: "divider", key: "divider-1" },
-  { type: "title", title: "Docs", key: "title-docs" },
+  { type: "title", title: "OBS Stream", key: "obs-stream" },
   {
     type: "collapse",
-    name: "Basic",
-    key: "basic",
-    icon: <Icon fontSize="medium">upcoming</Icon>,
+    name: "Scoreboards",
+    key: "Scoreboards",
+    icon: <Icon fontSize="medium">videocam</Icon>,
     collapse: [
       {
-        name: "How it Works",
-        key: "how-it-works",
-        href: "https://www.loom.com/share/ff3ea72ea031497ea5609b771951a0f6"
+        name: "Basic",
+        key: "basic",
+        route: "/scoreboards/basic",
       },
+      {
+        name: "Intermission",
+        key: "intermission",
+        route: "/scoreboards/intermission",
+      }
     ],
   }
   // {

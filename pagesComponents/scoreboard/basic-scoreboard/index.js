@@ -174,7 +174,7 @@ export default function BasicScoreBoard() {
           filter: `match_id=eq.${activeMatch.id}`,
         },
         (payload) => {
-          console.log("Realtime game update:", payload);
+          // console.log("Realtime game update:", payload);
           refreshData();
         }
       )
@@ -243,7 +243,7 @@ export default function BasicScoreBoard() {
               <Grid item sx={{
                 background: "linear-gradient(90deg, rgba(0,51,160,1) 0%, rgba(0,65,204,1) 100%)",
                 alignContent: "center",
-                 minWidth: "300px"
+                 minWidth: "375px"
               }} >
                 <MDBox>
                   <Grid display="flex">

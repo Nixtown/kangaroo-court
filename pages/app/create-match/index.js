@@ -25,10 +25,10 @@ const CreateMatch = () => {
     
     const [matchData, setMatchData] = useState({
         best_of: 3,
-        tournament_name: "Elare Pickleball Broadcast",
-        match_title: "Championship Court",
-        team_a_name: "Team A",
-        team_b_name: "Team B",
+        tournament_name: "OPPL SEASON 2 | ELARE BROADCAST",
+        match_title: "Center Court: Round of 8",
+        team_a_name: "Tulsa Titans",
+        team_b_name: "PB Tulsa",
         created_by: "11111111-1111-1111-1111-111111111111",
         active_match: true, 
         current_game: 1,
@@ -40,6 +40,7 @@ const CreateMatch = () => {
         scoring_type: "Regular",
         win_on_serve: false,
         point_cap: 0,
+        game_title: "Open Doubles",
       }), []);
       
 
@@ -104,6 +105,7 @@ const CreateMatch = () => {
             win_on_serve: game.win_on_serve,
             point_cap: game.point_cap,
             server: 2,
+            game_title: game.game_title
             }));
 
             // Insert the gameData array into the 'game_stats' table
@@ -250,7 +252,18 @@ const CreateMatch = () => {
 
                                 </Grid>
                                 </Grid>
-
+                                <Grid item xs={12} sm={12}>
+                                    <MDInput
+                                        fullWidth
+                                        label="Game Title"
+                                        value={game.game_title}
+                                        required
+                                        onChange={(e) =>
+                                            updateGameField(index, 'game_title', e.target.value)
+                                          }
+                                        inputProps={{ type: "text", autoComplete: "" }}
+                                    />
+                                </Grid>
                          
                                 <Grid item xs={12} sm={3}>
                                     <Autocomplete
