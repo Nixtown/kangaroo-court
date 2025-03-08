@@ -10,6 +10,7 @@ import Card from "@mui/material/Card";
 
 export default function BasicScoreBoard() {
 
+  const [branding, setBranding] = useState(null);
   const [activeMatch, setActiveMatch] = useState(null);
   const [activeGames, setActiveGames] = useState(null);
   const gamesData = activeGames ?? 
@@ -74,10 +75,8 @@ export default function BasicScoreBoard() {
     })();
       
       
-    // Team B: 1, 2
-    // Team A: 
-  
 
+  
 
   
   useEffect(() => {
@@ -102,6 +101,24 @@ export default function BasicScoreBoard() {
       setActiveGames(game);
     }
   };
+
+  useEffect(() => {
+    const fetchActiveBranding = async () => {
+      const { data, error } = await supabase
+        .from("branding")
+        .select("*")
+        .eq("active_branding", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching active branding:", error);
+      } else {
+        setBranding(data);
+      }
+    };
+
+    fetchActiveBranding();
+  }, []);
   
   const fetchActiveMatch = async () => {
     const { data, error } = await supabase
@@ -185,7 +202,13 @@ export default function BasicScoreBoard() {
       matchChannel.unsubscribe();
       gameChannel.unsubscribe();
     };
+  
   }, [activeMatch?.id]);
+
+
+  if (!branding) {
+    return <div></div>;
+  }
 
 
     return (
@@ -225,7 +248,7 @@ export default function BasicScoreBoard() {
 
               {/* -----------------  LOGO  ---------------- */}
               <Grid item  
-                  sx={{bgcolor: "#0033a0",
+                  sx={{bgcolor: branding.primary_color,
                   display: "flex", 
                   alignItems: "center",
                   borderRadius: "6px 0 0 6px",
@@ -233,15 +256,15 @@ export default function BasicScoreBoard() {
               }}>
                 <MDBox
                   component="img"
-                  src="/images/logos/elare-logo-avatar-light.png"
-                  sx={{ width: "46px", height: "auto"}}
+                  src={branding.logo_url}
+                  sx={{ width: "100%", height: "50px"}}
                 >
                 </MDBox>
               </Grid>
 
               {/* ----------------  TEAM NAMES  ---------------- */}
               <Grid item sx={{
-                background: "linear-gradient(90deg, rgba(0,51,160,1) 0%, rgba(0,65,204,1) 100%)",
+                background:`linear-gradient(90deg, ${branding.primary_color || "rgba(0,51,160,1)"} 0%, ${branding.secondary_color || "rgba(0,65,204,1)"} 100%)`,
                 alignContent: "center",
                  minWidth: "375px"
               }} >
@@ -271,7 +294,7 @@ export default function BasicScoreBoard() {
                               width: 12,
                               height: 12,
                               borderRadius: "50%",
-                              backgroundColor: "#03b403",
+                              backgroundColor: branding.primary_color,
                               display: currentServer === 1 ? "default" : "none",
                             }}
                           />

@@ -21,6 +21,7 @@ import next from "next";
 
 const RallyController = () => {
   const [activeMatch, setActiveMatch] = useState(null);
+  const [branding, setBranding] = useState(null);
   const [activeGame, setActiveGame] = useState(null);
   const gameData = activeGame ?? { team_a_score: 0, team_b_score: 0, game_number: 1 };
   const matchData = activeMatch ?? { current_game: 1, match_title: "Loading...", team_a_name: "Team A", team_b_name: "Team B" };
@@ -41,6 +42,24 @@ const RallyController = () => {
     };
   
     loadActiveMatchAndGame(); // ✅ Calls the function when the component mounts
+  }, []);
+
+  useEffect(() => {
+    const fetchActiveBranding = async () => {
+      const { data, error } = await supabase
+        .from("branding")
+        .select("*")
+        .eq("active_branding", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching active branding:", error);
+      } else {
+        setBranding(data);
+      }
+    };
+
+    fetchActiveBranding();
   }, []);
   
 
@@ -489,18 +508,12 @@ const RallyController = () => {
             <ButtonGroup variant="outlined" sx={{ height: "300px", width: "100%" }} aria-label="Basic button group" >
               <MDButton
                       variant="contained"
-                      sx={{
-                        '&:hover': {
-                          backgroundColor: "#0040cb", // Replace with the desired color value, e.g., '#ff0000'
-                        },
-                      }}
-                      color="elare"
                       fullWidth
                       size="large"
-                     
+                      color="dark"
                       onClick={() => handleRally(true)}
                       >
-                      Won <br/>
+                      Wons <br/>
                       Rally
 
           

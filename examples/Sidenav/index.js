@@ -2,23 +2,15 @@
 =========================================================
 * NextJS Material Dashboard 2 PRO - v2.2.0
 =========================================================
-
 * Product Page: https://www.creative-tim.com/product/nextjs-material-dashboard-pro
 * Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
 Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+=========================================================
 */
 
 import { useEffect, useState } from "react";
-
 import Link from "next/link";
 import { useRouter } from "next/router";
-
-// prop-types is a library for typechecking of props.
 import PropTypes from "prop-types";
 
 // @mui material components
@@ -48,20 +40,53 @@ import {
   setWhiteSidenav,
 } from "/context";
 
+// Import default logo (in case no branding is found)
+import profilePicture from "/assets/images/logos/elare-square.png";
+
+// Import Supabase client
+import { supabase } from "/lib/supabaseClient";
+
 function Sidenav({ color, brand, brandName, routes, ...rest }) {
   const [openCollapse, setOpenCollapse] = useState(false);
   const [openNestedCollapse, setOpenNestedCollapse] = useState(false);
   const [controller, dispatch] = useMaterialUIController();
-  const { miniSidenav, transparentSidenav, whiteSidenav, darkMode } =
-    controller;
+  const { miniSidenav, transparentSidenav, whiteSidenav, darkMode } = controller;
   const { pathname } = useRouter();
   const collapseName = pathname.split("/").slice(1)[0];
   const items = pathname.split("/").slice(1);
   const itemParentName = items[1];
   const itemName = items[items.length - 1];
 
-  let textColor = "white";
+  // Use dynamic branding instead of static brand/brandName
+  // Default values:
+  const [branding, setBranding] = useState({
+    logo_url: profilePicture.src,
+    preset_name: "Elare Pickleball",
+  });
 
+  // Fetch active branding from Supabase on mount
+  useEffect(() => {
+    const fetchBranding = async () => {
+      const { data, error } = await supabase
+        .from("branding")
+        .select("*")
+        .eq("active_branding", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching branding:", error);
+      } else if (data) {
+        setBranding({
+          logo_url: data.logo_url || profilePicture.src,
+          preset_name: data.preset_name || "Elare Pickleball",
+        });
+      }
+    };
+    fetchBranding();
+  }, []);
+
+  let textColor = "white";
   if (transparentSidenav || (whiteSidenav && !darkMode)) {
     textColor = "dark";
   } else if (whiteSidenav && darkMode) {
@@ -76,7 +101,6 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
   }, [collapseName, itemParentName]);
 
   useEffect(() => {
-    // A function that sets the mini state of the sidenav.
     function handleMiniSidenav() {
       setMiniSidenav(dispatch, window.innerWidth < 1200);
       setTransparentSidenav(
@@ -88,22 +112,14 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
         window.innerWidth < 1200 ? false : whiteSidenav
       );
     }
-
-    /** 
-     The event listener that's calling the handleMiniSidenav function when resizing the window.
-    */
     window.addEventListener("resize", handleMiniSidenav);
-
-    // Call the handleMiniSidenav function to set the state with the initial value.
     handleMiniSidenav();
-
-    // Remove event listener on cleanup
     return () => window.removeEventListener("resize", handleMiniSidenav);
   }, [dispatch, transparentSidenav, whiteSidenav]);
 
-  // Render all the nested collapse items from the routes.js
+  // Render all the nested collapse items from routes.js
   const renderNestedCollapse = (collapse) => {
-    const template = collapse.map(({ name, route, key, href }) =>
+    return collapse.map(({ name, route, key, href }) =>
       href ? (
         <MuiLink
           key={key}
@@ -120,14 +136,12 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
         </Link>
       )
     );
-
-    return template;
   };
-  // Render the all the collpases from the routes.js
+
+  // Render collapses from routes.js
   const renderCollapse = (collapses) =>
     collapses.map(({ name, collapse, route, href, key }) => {
       let returnValue;
-
       if (collapse) {
         returnValue = (
           <SidenavItem
@@ -166,11 +180,10 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
       return <SidenavList key={key}>{returnValue}</SidenavList>;
     });
 
-  // Render all the routes from the routes.js (All the visible items on the Sidenav)
+  // Render all routes from routes.js (visible items on the Sidenav)
   const renderRoutes = routes.map(
     ({ type, name, icon, title, collapse, noCollapse, key, href, route }) => {
       let returnValue;
-
       if (type === "collapse") {
         if (href) {
           returnValue = (
@@ -248,7 +261,6 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
           />
         );
       }
-
       return returnValue;
     }
   );
@@ -266,7 +278,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
           top={0}
           right={0}
           p={1.625}
-          onClick={closeSidenav}
+          onClick={() => setMiniSidenav(dispatch, true)}
           sx={{ cursor: "pointer" }}
         >
           <MDTypography variant="h6" color="secondary">
@@ -275,18 +287,14 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
         </MDBox>
         <Link href="/">
           <MDBox display="flex" alignItems="center">
-            {brand && brand.src ? (
-              <MDBox
-                component="img"
-                src={brand.src}
-                alt={brandName}
-                width="1.75rem"
-              />
-            ) : (
-              brand
-            )}
             <MDBox
-              width={!brandName && "100%"}
+              component="img"
+              src={branding.logo_url}
+              alt={branding.preset_name}
+              width="1.75rem"
+            />
+            <MDBox
+              width={!branding.preset_name && "100%"}
               sx={(theme) => sidenavLogoLabel(theme, { miniSidenav })}
             >
               <MDTypography
@@ -295,7 +303,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
                 fontWeight="medium"
                 color={textColor}
               >
-                {brandName}
+                {branding.preset_name}
               </MDTypography>
             </MDBox>
           </MDBox>

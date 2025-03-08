@@ -11,6 +11,7 @@ import { LineWeight } from "@mui/icons-material";
 
 export default function IntermissionScoreboard() {
 
+  const [branding, setBranding] = useState(null);
   const [activeMatch, setActiveMatch] = useState(null);
   const [activeGames, setActiveGames] = useState(null);
   const gamesData = activeGames ?? 
@@ -95,6 +96,25 @@ export default function IntermissionScoreboard() {
     };
 
 
+  }, []);
+
+
+  useEffect(() => {
+    const fetchActiveBranding = async () => {
+      const { data, error } = await supabase
+        .from("branding")
+        .select("*")
+        .eq("active_branding", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching active branding:", error);
+      } else {
+        setBranding(data);
+      }
+    };
+
+    fetchActiveBranding();
   }, []);
 
   const loadActiveMatchAndGame = async () => {
@@ -191,6 +211,12 @@ export default function IntermissionScoreboard() {
   }, [activeMatch?.id]);
 
 
+
+  if (!branding) {
+    return <div></div>;
+  }
+
+
     return (
             
       <MDBox id="main" sx={{ paddingTop: "740px", paddingBottom: "200px"}}>
@@ -221,7 +247,7 @@ export default function IntermissionScoreboard() {
             </Grid>
             <Grid  item id="tournament-info-node"
               sx={{
-                background: "linear-gradient(90deg, rgba(0,51,160,1) 0%, rgba(0,65,204,1) 100%)",
+                background:`linear-gradient(90deg, ${branding.primary_color || "rgba(0,51,160,1)"} 0%, ${branding.secondary_color || "rgba(0,65,204,1)"} 100%)`,
                 borderRadius: "18px",
               }}
             >
@@ -238,7 +264,7 @@ export default function IntermissionScoreboard() {
                 >
                   <MDBox
                     component="img"
-                    src="/images/logos/elare-logo-light.png"
+                    src={branding.logo_url}
                     sx={{ width: "80px", height: "auto"}}
                   >
                   </MDBox>

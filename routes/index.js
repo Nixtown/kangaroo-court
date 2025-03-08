@@ -35,6 +35,8 @@ Coded by www.creative-tim.com
 */
 
 // NextJS Material Dashboard 2 PRO components
+
+
 import MDAvatar from "/components/MDAvatar";
 
 // @mui icons
@@ -44,12 +46,12 @@ import Icon from "@mui/material/Icon";
 import profilePicture from "/assets/images/logos/elare-square.png";
 
 const routes = [
-  { type: "title", title: "Score", key: "title-scoreboard" },
+  { type: "title", title: " Score Tracker", key: "title-scoreboard" },
   {
     type: "collapse",
-    name: "Elare Pickleball",
+    name: "Controller",
     key: "brooklyn-alice",
-    icon: <MDAvatar src={profilePicture.src} alt="Elare Pickleball" size="sm" />,
+    icon: <Icon fontSize="medium">build</Icon>,
     noCollapse: true,
     collapse: [
         {
@@ -61,6 +63,11 @@ const routes = [
           name: "Rally Controller",
           key: "profile-overview",
           route: "/app/rally-controller",
+        },
+        {
+          name: "Branding Settings",
+          key: "branding-settings",
+          route: "/app/branding-settings",
         }
       ],
     },

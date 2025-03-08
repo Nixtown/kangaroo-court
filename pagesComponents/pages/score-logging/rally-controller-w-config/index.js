@@ -20,9 +20,29 @@ import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
 import next from "next";
 
 const RallyControllerWConfig = () => {
+  const [branding, setBranding] = useState(null);
   const [matchData, setMatchData] = useState(null);
   const [gameData, setGameData] = useState([]);
   const isSmallScreen = useMediaQuery('(max-width:850px)');
+
+  
+  useEffect(() => {
+    const fetchActiveBranding = async () => {
+      const { data, error } = await supabase
+        .from("branding")
+        .select("*")
+        .eq("active_branding", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching active branding:", error);
+      } else {
+        setBranding(data);
+      }
+    };
+
+    fetchActiveBranding();
+  }, []);
 
   useEffect(() => {
 
@@ -519,10 +539,10 @@ const RallyControllerWConfig = () => {
   }
   
   
-
+ 
 
   // Render your component conditionally based on whether matchData or gameData is loaded
-  if (!matchData || gameData.length === 0) {
+  if (!matchData || gameData.length === 0 || !branding) {
     return <div></div>;
   }
 
@@ -561,11 +581,12 @@ const RallyControllerWConfig = () => {
               <MDButton
                       variant="contained"
                       sx={{
+                        backgroundColor: branding.primary_color, // Primary color applied correctly
                         '&:hover': {
-                          backgroundColor: "#0040cb", // Replace with the desired color value, e.g., '#ff0000'
+                          backgroundColor: branding.primary_color, // Ensures hover effect works
                         },
                       }}
-                      color="elare"
+                      color="dark"
                       fullWidth
                       size="large"
                       disabled={gameData[matchData.current_game - 1].game_completed === true}
