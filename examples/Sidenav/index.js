@@ -56,6 +56,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
   const items = pathname.split("/").slice(1);
   const itemParentName = items[1];
   const itemName = items[items.length - 1];
+  const [fullName, setFullName] = useState("");
 
   // Use dynamic branding instead of static brand/brandName
   // Default values:
@@ -63,6 +64,30 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
     logo_url: profilePicture.src,
     preset_name: "Elare Pickleball",
   });
+
+
+  useEffect(() => {
+    const fetchFullName = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User not authenticated:", authError);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("users")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching full name:", error);
+      } else {
+        setFullName(data?.full_name || "");
+      }
+    };
+  
+    fetchFullName();
+  }, []);
+
 
   // Fetch active branding from Supabase on mount
   useEffect(() => {
@@ -303,7 +328,7 @@ function Sidenav({ color, brand, brandName, routes, ...rest }) {
                 fontWeight="medium"
                 color={textColor}
               >
-                {branding.preset_name}
+               {fullName}
               </MDTypography>
             </MDBox>
           </MDBox>

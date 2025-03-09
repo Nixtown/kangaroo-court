@@ -1,17 +1,6 @@
-/**
-=========================================================
-* NextJS Material Dashboard 2 PRO - v2.2.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/nextjs-material-dashboard-pro
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "/lib/supabaseClient";
 
 import Link from "next/link";
 
@@ -32,6 +21,48 @@ import CoverLayout from "/pagesComponents/authentication/components/CoverLayout"
 import bgImage from "/assets/images/bg-sign-up-cover.jpeg";
 
 function Cover() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // ✅ Handle form input changes
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ✅ Handle Sign Up (Creates account in Supabase Auth)
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
+
+    const { email, password, name } = formData;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    // ✅ Store the user info in a `users` table (optional)
+    await supabase.from("users").insert([
+      { id: data.user.id, email, full_name: name },
+    ]);
+
+    alert("Check your email for a confirmation link!");
+    router.push("/app/rally-controller"); // Redirect after sign up
+  };
+
   return (
     <CoverLayout image={bgImage}>
       <Card>
@@ -54,56 +85,61 @@ function Cover() {
           </MDTypography>
         </MDBox>
         <MDBox pt={4} pb={3} px={3}>
-          <MDBox component="form" role="form">
+          <MDBox component="form" role="form" onSubmit={handleSignUp}>
             <MDBox mb={2}>
-              <MDInput type="text" label="Name" variant="standard" fullWidth />
+              <MDInput
+                type="text"
+                name="name"
+                label="Name"
+                variant="standard"
+                fullWidth
+                value={formData.name}
+                onChange={handleChange}
+              />
             </MDBox>
             <MDBox mb={2}>
               <MDInput
                 type="email"
+                name="email"
                 label="Email"
                 variant="standard"
                 fullWidth
+                value={formData.email}
+                onChange={handleChange}
               />
             </MDBox>
             <MDBox mb={2}>
               <MDInput
                 type="password"
+                name="password"
                 label="Password"
                 variant="standard"
                 fullWidth
+                value={formData.password}
+                onChange={handleChange}
               />
             </MDBox>
-            <MDBox display="flex" alignItems="center" ml={-1}>
-              <Checkbox />
-              <MDTypography
-                variant="button"
-                fontWeight="regular"
-                color="text"
-                sx={{ cursor: "pointer", userSelect: "none", ml: -1 }}
-              >
-                &nbsp;&nbsp;I agree the&nbsp;
+            {errorMessage && (
+              <MDTypography color="error" variant="caption">
+                {errorMessage}
               </MDTypography>
-              <MDTypography
-                component="a"
-                href="#"
-                variant="button"
-                fontWeight="bold"
-                color="dark"
-                textGradient
-              >
-                Terms and Conditions
-              </MDTypography>
-            </MDBox>
+            )}
+
             <MDBox mt={4} mb={1}>
-              <MDButton variant="gradient" color="dark" fullWidth>
-                sign in
+              <MDButton
+                variant="gradient"
+                color="dark"
+                fullWidth
+                type="submit"
+                disabled={loading}
+              >
+                {loading ? "Signing Up..." : "Sign Up"}
               </MDButton>
             </MDBox>
             <MDBox mt={3} mb={1} textAlign="center">
               <MDTypography variant="button" color="text">
                 Already have an account?{" "}
-                <Link href="/authentication/sign-in/cover">
+                <Link href="/authentication/sign-in/basic">
                   <MDTypography
                     variant="button"
                     color="dark"

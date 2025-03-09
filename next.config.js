@@ -15,7 +15,7 @@ module.exports = withTM({
     return [
       {
         source: "/",
-        destination: "/authentication/sign-in",
+        destination: "/authentication/sign-in/basic",
         permanent: true,
       },
     ];

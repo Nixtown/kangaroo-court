@@ -63,11 +63,6 @@ const routes = [
           name: "Rally Controller",
           key: "profile-overview",
           route: "/app/rally-controller",
-        },
-        {
-          name: "Branding Settings",
-          key: "branding-settings",
-          route: "/app/branding-settings",
         }
       ],
     },
@@ -291,7 +286,7 @@ const routes = [
   //     },
   //   ],
   // },
-  { type: "divider", key: "divider-1" },
+  { type: "divider", key: "divider-2" },
   { type: "title", title: "OBS Stream", key: "obs-stream" },
   {
     type: "collapse",
@@ -300,17 +295,32 @@ const routes = [
     icon: <Icon fontSize="medium">videocam</Icon>,
     collapse: [
       {
-        name: "Basic",
-        key: "basic",
-        route: "/scoreboards/basic",
-      },
-      {
-        name: "Intermission",
-        key: "intermission",
-        route: "/scoreboards/intermission",
+        name: "Scoreboard Links",
+        key: "scoreboard-links",
+        route: "/app/scoreboards/",
       }
     ],
-  }
+  },
+  { type: "divider", key: "divider-1" },
+  {
+    type: "collapse",
+    name: "Settings",
+    key: "Scoreboardss",
+    icon: <Icon fontSize="medium">settings</Icon>,
+    collapse: [
+      {
+        name: "Branding",
+        key: "branding-settings",
+        route: "/app/branding-settings",
+      },
+      {
+        name: "Sign Out",
+        key: "sign-out",
+        route: "/authentication/sign-out",
+      }
+    ],
+  },
+
   // {
   //   type: "collapse",
   //   name: "Components",

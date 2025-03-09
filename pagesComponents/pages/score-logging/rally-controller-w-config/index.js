@@ -44,25 +44,31 @@ const RallyControllerWConfig = () => {
     fetchActiveBranding();
   }, []);
 
-  useEffect(() => {
+// Fetch active match data, but only for the current logged-in user.
+useEffect(() => {
+  const fetchActiveMatch = async () => {
+    // Get the current authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User is not authenticated:", authError);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('matches')
+      .select('*')
+      .eq('active_match', true)
+      .eq('user_id', user.id) // Only load match for the current user
+      .single(); // Assuming there's only one active match per user
 
-    /// Get the active match data
-    const fetchActiveMatch = async () => {
-      const { data, error } = await supabase
-        .from('matches')
-        .select('*')
-        .eq('active_match', true)
-        .single(); // Assuming there's only one active match
+    if (error) {
+      console.error("Error fetching active match:", error);
+    } else {
+      setMatchData(data);
+    }
+  };
 
-      if (error) {
-        console.error("Error fetching active match:", error);
-      } else {
-        setMatchData(data);
-      }
-    };
-
-    fetchActiveMatch();
-  }, []);
+  fetchActiveMatch();
+}, []);
 
   /// Get all the games using the active match id
   useEffect(() => {

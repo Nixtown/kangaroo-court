@@ -3,14 +3,13 @@ import { useEffect, useState } from "react";
 import MDBox from "/components/MDBox";
 import MDTypography from "/components/MDTypography";
 import { Grid } from "@mui/material";
-import BasicScoreNode from "../basic-score-node";
 import { supabase } from '/lib/supabaseClient';
-import Card from "@mui/material/Card";
-import { LineWeight } from "@mui/icons-material";
+import { useRouter } from "next/router";
 
 
 export default function IntermissionScoreboard() {
-
+  
+  const router = useRouter();
   const [branding, setBranding] = useState(null);
   const [activeMatch, setActiveMatch] = useState(null);
   const [activeGames, setActiveGames] = useState(null);
@@ -83,6 +82,12 @@ export default function IntermissionScoreboard() {
   
 
 
+    useEffect(() => {
+      console.log("Router ready:", router.isReady, "Token:", router.query.token);
+      if (!router.isReady) return;
+      // ... rest of your fetch logic
+    }, [router.isReady, router.query.token]);
+
   
   useEffect(() => {
     document.body.classList.add("obs-transparent");
@@ -96,7 +101,7 @@ export default function IntermissionScoreboard() {
     };
 
 
-  }, []);
+  }, [router.isReady, router.query.token]);
 
 
   useEffect(() => {
@@ -127,12 +132,41 @@ export default function IntermissionScoreboard() {
   };
   
   const fetchActiveMatch = async () => {
+    // Wait until the router is ready
+    if (!router.isReady) return null;
+  
+    let userId;
+    const { token } = router.query;
+    
+    if (token) {
+      // If a token is provided, look up the user by overlay_token
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("overlay_token", token)
+        .maybeSingle();
+      if (userError || !userData) {
+        console.error("Error fetching user by overlay token:", userError);
+        return null;
+      }
+      userId = userData.id;
+    } else {
+      // If no token, fall back to the currently logged-in user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User not authenticated and no token provided:", authError);
+        return null;
+      }
+      userId = user.id;
+    }
+  
+    // Now, fetch the active match for that user
     const { data, error } = await supabase
       .from("matches")
       .select("*")
-      .is("active_match", true)
+      .eq("active_match", true)
+      .eq("user_id", userId)
       .maybeSingle();
-
     if (error) {
       console.error("Error fetching active match:", error);
       return null;

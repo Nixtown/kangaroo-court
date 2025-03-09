@@ -18,14 +18,13 @@ import React from "react";
 const CreateMatch = () => {
   const router = useRouter();
 
-  // Default match settings if no preset exists yet.
+  // Default match settings without created_by, using user_id instead.
   const defaultMatchData = {
     best_of: 3,
     tournament_name: "OPPL SEASON 2 | ELARE BROADCAST",
     match_title: "Center Court: Round of 8",
     team_a_name: "Tulsa Titans",
     team_b_name: "PB Tulsa",
-    created_by: "11111111-1111-1111-1111-111111111111",
     active_match: true,
     current_game: 1,
   };
@@ -97,16 +96,26 @@ const CreateMatch = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Step 1: Set all matches to inactive
-    await supabase
-      .from("matches")
-      .update({ active_match: false })
-      .neq("active_match", false);
+  // Get the authenticated user first:
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.error("User is not authenticated:", authError);
+    return;
+  }
 
-    // Step 2: Insert matchData into the 'matches' table.
+  // Deactivate only matches that belong to the current user:
+  await supabase
+    .from("matches")
+    .update({ active_match: false })
+    .eq("user_id", user.id);
+
+    // Merge the authenticated user's ID into matchData as user_id
+    const matchDataWithUser = { ...matchData, user_id: user.id };
+
+    // Step 3: Insert matchData into the 'matches' table.
     const { data, error } = await supabase
       .from("matches")
-      .insert(matchData)
+      .insert(matchDataWithUser)
       .select();
 
     if (error) {
@@ -143,49 +152,49 @@ const CreateMatch = () => {
         console.log("Inserted game data:", gameResponse);
       }
 
-    // Save the current match settings (including game settings) as a preset.
-    const presetPayload = {
+      // Save the current match settings (including game settings) as a preset.
+      const presetPayload = {
         preset_data: {
-        matchData,
-        gameData,
+          matchData: matchDataWithUser,
+          gameData,
         },
-    };
-    
-    // First, check if a preset exists.
-    const { data: existingPreset, error: presetQueryError } = await supabase
+      };
+
+      // First, check if a preset exists.
+      const { data: existingPreset, error: presetQueryError } = await supabase
         .from("match_presets")
         .select("*")
         .limit(1)
         .maybeSingle();
-    
-    if (presetQueryError) {
+
+      if (presetQueryError) {
         console.error("Error fetching preset:", presetQueryError);
-    } else if (existingPreset) {
+      } else if (existingPreset) {
         // Update the existing preset (the first row)
         const { data: presetData, error: presetError } = await supabase
-        .from("match_presets")
-        .update(presetPayload)
-        .eq("id", existingPreset.id)
-        .select();
-    
+          .from("match_presets")
+          .update(presetPayload)
+          .eq("id", existingPreset.id)
+          .select();
+
         if (presetError) {
-        console.error("Error updating preset:", presetError);
+          console.error("Error updating preset:", presetError);
         } else {
-        console.log("Preset updated:", presetData);
+          console.log("Preset updated:", presetData);
         }
-    } else {
+      } else {
         // No preset exists; insert a new one.
         const { data: presetData, error: presetError } = await supabase
-        .from("match_presets")
-        .insert(presetPayload)
-        .select();
-    
+          .from("match_presets")
+          .insert(presetPayload)
+          .select();
+
         if (presetError) {
-        console.error("Error inserting preset:", presetError);
+          console.error("Error inserting preset:", presetError);
         } else {
-        console.log("Preset inserted:", presetData);
+          console.log("Preset inserted:", presetData);
         }
-    }
+      }
 
       // Step 4: Redirect to match controller
       router.push("/app/rally-controller");

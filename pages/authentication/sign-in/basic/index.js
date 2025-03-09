@@ -1,19 +1,6 @@
-/**
-=========================================================
-* NextJS Material Dashboard 2 PRO - v2.2.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/nextjs-material-dashboard-pro
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
-
 import { useState } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "/lib/supabaseClient";
 
 import Link from "next/link";
 
@@ -41,9 +28,48 @@ import BasicLayout from "/pagesComponents/authentication/components/BasicLayout"
 import bgImage from "/assets/images/bg-sign-in-basic.jpeg";
 
 function Basic() {
+  const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSetRememberMe = () => setRememberMe(!rememberMe);
+  // ✅ Handle form input changes
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // ✅ Handle Login (Email/Password)
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
+
+    const { email, password } = formData;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+      setLoading(false);
+      return;
+    }
+
+    // ✅ Redirect after successful login
+    router.push("/dashboard");
+  };
+
+  // ✅ Handle Social Login (Google, GitHub)
+  const handleSocialLogin = async (provider) => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider });
+
+    if (error) {
+      setErrorMessage(error.message);
+    }
+  };
 
   return (
     <BasicLayout image={bgImage}>
@@ -62,79 +88,67 @@ function Basic() {
           <MDTypography variant="h4" fontWeight="medium" color="white" mt={1}>
             Sign in
           </MDTypography>
-          <Grid
-            container
-            spacing={3}
-            justifyContent="center"
-            sx={{ mt: 1, mb: 2 }}
-          >
-            <Grid item xs={2}>
-              <MDTypography
-                component={MuiLink}
-                href="#"
-                variant="body1"
-                color="white"
-              >
-                <FacebookIcon color="inherit" />
-              </MDTypography>
-            </Grid>
-            <Grid item xs={2}>
-              <MDTypography
-                component={MuiLink}
-                href="#"
-                variant="body1"
-                color="white"
-              >
-                <GitHubIcon color="inherit" />
-              </MDTypography>
-            </Grid>
-            <Grid item xs={2}>
-              <MDTypography
-                component={MuiLink}
-                href="#"
-                variant="body1"
-                color="white"
-              >
-                <GoogleIcon color="inherit" />
-              </MDTypography>
-            </Grid>
-          </Grid>
         </MDBox>
         <MDBox pt={4} pb={3} px={3}>
-          <MDBox component="form" role="form">
+          <MDBox component="form" role="form" onSubmit={handleLogin}>
+            {/* Email Input */}
             <MDBox mb={2}>
-              <MDInput type="email" label="Email" fullWidth />
+              <MDInput
+                type="email"
+                name="email"
+                label="Email"
+                fullWidth
+                value={formData.email}
+                onChange={handleChange}
+              />
             </MDBox>
+
+            {/* Password Input */}
             <MDBox mb={2}>
-              <MDInput type="password" label="Password" fullWidth />
+              <MDInput
+                type="password"
+                name="password"
+                label="Password"
+                fullWidth
+                value={formData.password}
+                onChange={handleChange}
+              />
             </MDBox>
+
+            {/* Remember Me */}
             <MDBox display="flex" alignItems="center" ml={-1}>
-              <Switch checked={rememberMe} onChange={handleSetRememberMe} />
+              <Switch checked={rememberMe} onChange={() => setRememberMe(!rememberMe)} />
               <MDTypography
                 variant="button"
                 fontWeight="regular"
                 color="text"
-                onClick={handleSetRememberMe}
+                onClick={() => setRememberMe(!rememberMe)}
                 sx={{ cursor: "pointer", userSelect: "none", ml: -1 }}
               >
                 &nbsp;&nbsp;Remember me
               </MDTypography>
             </MDBox>
+
+            {/* Display error message if login fails */}
+            {errorMessage && (
+              <MDTypography color="error" variant="caption">
+                {errorMessage}
+              </MDTypography>
+            )}
+
+            {/* Sign In Button */}
             <MDBox mt={4} mb={1}>
-              <MDButton variant="gradient" color="dark" fullWidth>
-                sign in
+              <MDButton variant="gradient" color="dark" fullWidth type="submit" disabled={loading}>
+                {loading ? "Signing In..." : "Sign In"}
               </MDButton>
             </MDBox>
+
+            {/* Sign Up Redirect */}
             <MDBox mt={3} mb={1} textAlign="center">
               <MDTypography variant="button" color="text">
                 Don&apos;t have an account?{" "}
                 <Link href="/authentication/sign-up/cover">
-                  <MDTypography
-                    variant="button"
-                    color="dark"
-                    fontWeight="medium"
-                    textGradient
-                  >
+                  <MDTypography variant="button" color="dark" fontWeight="medium" textGradient>
                     Sign up
                   </MDTypography>
                 </Link>
