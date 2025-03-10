@@ -14,11 +14,13 @@ import MDButton from "/components/MDButton";
 import MDInput from "/components/MDInput";
 import Switch from "@mui/material/Switch";
 import React from "react";
+import { toast } from "react-toastify";
 
 const CreateMatch = () => {
+
   const router = useRouter();
 
-  // Default match settings without created_by, using user_id instead.
+  // Default match settings
   const defaultMatchData = {
     best_of: 3,
     tournament_name: "OPPL SEASON 2 | ELARE BROADCAST",
@@ -29,10 +31,12 @@ const CreateMatch = () => {
     current_game: 1,
   };
 
-  // State for match settings and game settings
+  // State for match settings and preset name
   const [matchData, setMatchData] = useState(defaultMatchData);
+  const [presetName, setPresetName] = useState("");
+  const [presetId, setPresetId] = useState("");
 
-  // Default game conditions (same for every game by default)
+  // Default game conditions
   const defaultGameConditions = useMemo(() => ({
     first_to_points: 11,
     win_by: 2,
@@ -42,82 +46,128 @@ const CreateMatch = () => {
     game_title: "Open Doubles",
   }), []);
 
-  // State for game settings; initialize an array with length equal to best_of
+  // State for game settings; initialize based on defaultMatchData.best_of
   const [gameData, setGameData] = useState(
     Array.from({ length: defaultMatchData.best_of }, () => ({ ...defaultGameConditions }))
   );
 
+  // State for match presets (loaded from DB)
+  const [matchPresets, setMatchPresets] = useState([]);
+
   // Update gameData when best_of changes
   useEffect(() => {
-    setGameData(Array.from({ length: matchData.best_of }, () => ({ ...defaultGameConditions })));
+    setGameData(
+      Array.from({ length: matchData.best_of }, () => ({ ...defaultGameConditions }))
+    );
   }, [matchData.best_of, defaultGameConditions]);
 
-  // Helper function to update a specific game field
+  // Helper: update a specific game field
   const updateGameField = (index, field, value) => {
-    setGameData(prev =>
+    setGameData((prev) =>
       prev.map((g, i) => (i === index ? { ...g, [field]: value } : g))
     );
   };
 
-  // Fetch the latest match preset (if any) and use it as default settings
-  const fetchLatestPreset = async () => {
-    const { data, error } = await supabase
-      .from("match_presets")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching latest preset:", error);
-      return;
-    }
-    if (data && data.preset_data) {
-      // Preset data should contain both match settings and game settings.
-      const preset = data.preset_data;
-      setMatchData(preset.matchData || preset); // If preset has nested structure
-      if (preset.gameData) {
-        setGameData(preset.gameData);
-      }
-    }
+  // Handle form field changes for matchData
+  const handleChange = (field, value) => {
+    setMatchData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Load latest preset when component mounts.
+  // Fetch the latest preset for the current user and apply it to state
   useEffect(() => {
-    fetchLatestPreset();
+    const fetchActivePreset = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User not authenticated:", authError);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("match_presets")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching latest preset:", error);
+        return;
+      }
+      if (data && data.preset_data) {
+        const preset = data.preset_data;
+        setMatchData(preset.matchData || preset);
+        if (preset.gameData) {
+          setGameData(preset.gameData);
+          setPresetName(data.preset_name);
+          setPresetId(data.id);
+        }
+      }
+    };
+
+    fetchActivePreset();
   }, []);
 
-  // Handle form field changes for matchData.
-  const handleChange = (field, value) => {
-    setMatchData(prev => ({ ...prev, [field]: value }));
+  // Fetch all match presets for the current user to populate the dropdown
+  useEffect(() => {
+    const fetchMatchPresets = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User not authenticated:", authError);
+        return;
+      }
+      const { data, error } = await supabase
+        .from("match_presets")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching match presets:", error);
+      } else {
+        setMatchPresets(data || []);
+      }
+    };
+
+    fetchMatchPresets();
+  }, []);
+
+  // When a preset is selected from the dropdown, update state with its data.
+  const handlePresetChange = (event, newValue) => {
+    if (newValue && newValue.preset_data) {
+      const preset = newValue.preset_data;
+      setMatchData(preset.matchData || preset);
+      if (preset.gameData) {
+        setGameData(preset.gameData);
+        setPresetName(newValue.preset_name)
+        setPresetId(newValue.id);
+      }
+    }
   };
 
   /// Create Match in Supabase ///
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  // Get the authenticated user first:
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    console.error("User is not authenticated:", authError);
-    return;
-  }
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      return;
+    }
 
-  // Deactivate only matches that belong to the current user:
-  await supabase
-    .from("matches")
-    .update({ active_match: false })
-    .eq("user_id", user.id);
+    // Deactivate only matches that belong to the current user
+    await supabase
+      .from("matches")
+      .update({ active_match: false })
+      .eq("user_id", user.id);
 
-    // Merge the authenticated user's ID into matchData as user_id
+    // Merge user_id into matchData
     const matchDataWithUser = { ...matchData, user_id: user.id };
 
-    // Step 3: Insert matchData into the 'matches' table.
+    // Insert new match into 'matches'
     const { data, error } = await supabase
       .from("matches")
       .insert(matchDataWithUser)
       .select();
-
     if (error) {
       console.error("Error inserting match:", error);
       return;
@@ -126,7 +176,6 @@ const CreateMatch = () => {
 
     if (data && data.length > 0) {
       const matchId = data[0].id;
-
       // Prepare gameData for insertion into 'game_stats'
       const gamesToInsert = gameData.map((game, index) => ({
         match_id: matchId,
@@ -136,80 +185,158 @@ const CreateMatch = () => {
         scoring_type: game.scoring_type,
         win_on_serve: game.win_on_serve,
         point_cap: game.point_cap,
-        server: 2,  // default server
+        server: 2, // default server
         game_title: game.game_title,
       }));
-
-      // Insert gameData into 'game_stats' table
+      // Insert gameData
       const { data: gameResponse, error: gameError } = await supabase
         .from("game_stats")
         .insert(gamesToInsert)
         .select();
-
       if (gameError) {
         console.error("Error inserting game data:", gameError);
       } else {
         console.log("Inserted game data:", gameResponse);
       }
 
-      // Save the current match settings (including game settings) as a preset.
-      const presetPayload = {
-        preset_data: {
-          matchData: matchDataWithUser,
-          gameData,
-        },
-      };
-
-      // First, check if a preset exists.
-      const { data: existingPreset, error: presetQueryError } = await supabase
-        .from("match_presets")
-        .select("*")
-        .limit(1)
-        .maybeSingle();
-
-      if (presetQueryError) {
-        console.error("Error fetching preset:", presetQueryError);
-      } else if (existingPreset) {
-        // Update the existing preset (the first row)
-        const { data: presetData, error: presetError } = await supabase
-          .from("match_presets")
-          .update(presetPayload)
-          .eq("id", existingPreset.id)
-          .select();
-
-        if (presetError) {
-          console.error("Error updating preset:", presetError);
-        } else {
-          console.log("Preset updated:", presetData);
-        }
-      } else {
-        // No preset exists; insert a new one.
-        const { data: presetData, error: presetError } = await supabase
-          .from("match_presets")
-          .insert(presetPayload)
-          .select();
-
-        if (presetError) {
-          console.error("Error inserting preset:", presetError);
-        } else {
-          console.log("Preset inserted:", presetData);
-        }
-      }
-
-      // Step 4: Redirect to match controller
+      // Redirect to match controller
       router.push("/app/rally-controller");
+
+  }
+}
+
+  // Function to save current match settings as a new preset
+  const saveAsPreset = async () => {
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      return;
     }
-  };
+    // Build preset payload using presetName and current matchData/gameData
+    const presetPayload = {
+      preset_name: presetName,
+      user_id: user.id,
+      is_active: true,
+      preset_data: {
+        matchData,
+        gameData,
+      },
+    };
+
+    
+    await supabase
+    .from("match_presets")
+    .update({ is_active: false })
+    .eq("user_id", user.id);
+
+
+    // Insert new preset
+    const { data, error } = await supabase
+      .from("match_presets")
+      .insert(presetPayload)
+      .select();
+      if (error) {
+        console.error("Error creating preset:", error);
+        if (error.code === '23505') {
+          toast.error("Preset name already taken.");
+        } else {
+          toast.error("Error creating preset");
+        }
+    } else {
+      console.log("Preset created:", data);
+      toast.success("Preset created successfully");
+      // Optionally, refresh the presets list:
+      setMatchPresets((prev) => [data[0], ...prev]);
+    }
+  }
+
+
+const savePreset = async () => {
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.error("User not authenticated:", authError);
+    return;
+  }
+
+const NewPreset = {
+  preset_name: presetName,
+  user_id: user.id,
+  id: presetId,
+  is_active: true,
+  preset_data: {
+    matchData,
+    gameData,
+  },
+}
+
+
+await supabase
+.from("match_presets")
+.update({ is_active: false })
+.eq("user_id", user.id);
+
+
+const { data: updatedPreset, error: updateError } = await supabase
+    .from("match_presets")
+    .update(NewPreset)
+    .eq("id", NewPreset.id)
+    .select();
+  if (updateError) {
+    console.error("Error updating preset:", updateError);
+  } else {
+    console.log("Preset updated:", updatedPreset);
+  }
+
+}
+  
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox>
         <Card sx={{ width: "100%" }}>
-          <MDBox component="form" pb={3} px={3} onSubmit={handleSubmit}>
+          <MDBox component="form" pb={3} px={3}>
             <Grid container spacing={3} pt={3}>
               <Grid item xs={12}>
                 <MDTypography variant="h5">Match Information</MDTypography>
+              </Grid>
+              <Grid item xs={12}>
+                <Autocomplete
+                  options={matchPresets}
+                  getOptionLabel={(option) =>
+                    option.preset_name || new Date(option.updated_at).toLocaleString()
+                  }
+                  onChange={handlePresetChange}
+                  renderInput={(params) => (
+                    <MDInput {...params} label="Load Match Preset" InputLabelProps={{ shrink: true }} />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={12}>
+                <MDInput
+                  fullWidth
+                  label="Preset Name"
+                  value={presetName}
+                  required
+                  onChange={(e) => setPresetName(e.target.value)}
+                  inputProps={{ type: "text", autoComplete: "" }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={12}>
+                <MDInput
+                  fullWidth
+                  label="Best Of"
+                  value={matchData.best_of}
+                  required
+                  onChange={(e) => {
+                    const newValue = Math.min(7, Math.max(1, parseInt(e.target.value, 10) || 1));
+                    handleChange("best_of", newValue);
+                  }}
+                  inputProps={{ type: "number", autoComplete: "" }}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <MDInput
@@ -249,19 +376,6 @@ const CreateMatch = () => {
                   required
                   onChange={(e) => handleChange("team_b_name", e.target.value)}
                   inputProps={{ type: "text", autoComplete: "" }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={2} md={2}>
-                <MDInput
-                  fullWidth
-                  label="Best Of"
-                  value={matchData.best_of}
-                  required
-                  onChange={(e) => {
-                    const newValue = Math.min(7, Math.max(1, parseInt(e.target.value, 10) || 1));
-                    handleChange("best_of", newValue);
-                  }}
-                  inputProps={{ type: "number", autoComplete: "" }}
                 />
               </Grid>
             </Grid>
@@ -344,8 +458,24 @@ const CreateMatch = () => {
 
             <Grid container spacing={3} pt={3} pl={3}>
               <Grid item xs={12} sm={12}>
-                <MDButton variant="gradient" color="dark" fullWidth type="submit">
+                <MDButton
+                onClick={handleSubmit}
+                variant="gradient" color="dark" fullWidth>
                   Create Match
+                </MDButton>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MDButton
+                onClick={savePreset}
+                variant="gradient" color="dark" fullWidth>
+                  Save Preset
+                </MDButton>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <MDButton
+                onClick={saveAsPreset}
+                variant="gradient" color="dark" fullWidth>
+                  Save as New Preset
                 </MDButton>
               </Grid>
             </Grid>

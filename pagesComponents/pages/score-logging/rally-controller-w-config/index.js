@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from '/lib/supabaseClient';
 import { useMediaQuery } from '@mui/material';
 import { toast } from "react-toastify";
+import { useRouter } from "next/router";
+
 
 
 
@@ -24,23 +26,35 @@ const RallyControllerWConfig = () => {
   const [matchData, setMatchData] = useState(null);
   const [gameData, setGameData] = useState([]);
   const isSmallScreen = useMediaQuery('(max-width:850px)');
+  const router = useRouter();
+
 
   
   useEffect(() => {
     const fetchActiveBranding = async () => {
+      // Get the current authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User is not authenticated:", authError);
+        return;
+      }
+  
+      // Query the branding table for the active branding record for this user
       const { data, error } = await supabase
         .from("branding")
         .select("*")
         .eq("active_branding", true)
+        .eq("user_id", user.id)
         .limit(1)
         .maybeSingle();
+  
       if (error) {
         console.error("Error fetching active branding:", error);
       } else {
         setBranding(data);
       }
     };
-
+  
     fetchActiveBranding();
   }, []);
 
@@ -60,15 +74,31 @@ useEffect(() => {
       .eq('user_id', user.id) // Only load match for the current user
       .single(); // Assuming there's only one active match per user
 
-    if (error) {
-      console.error("Error fetching active match:", error);
+    if (error || !data) {
+      console.error("No active match found or error fetching match:", error);
+      router.push("/app/create-match"); // Redirect if no active match is found
+      toast.error(
+        "Create a match before using rally controller.",
+        {
+          position: "top-center", // Positions the toast at the top center
+          autoClose: 3000,        // Auto-closes after 3 seconds
+          hideProgressBar: false, // Displays the progress bar
+          closeOnClick: true,     // Allows dismissal on click
+          pauseOnHover: true,     // Pauses autoClose timer when hovered
+          draggable: true,        // Enables dragging to dismiss
+          theme: "dark",       // Uses the "colored" theme for a vibrant look
+          style: { width: "100%", maxWidth: "500px" },
+        }
+      );
     } else {
       setMatchData(data);
     }
   };
 
-  fetchActiveMatch();
-}, []);
+  if (router.isReady) {
+    fetchActiveMatch();
+  }
+}, [router]);
 
   /// Get all the games using the active match id
   useEffect(() => {

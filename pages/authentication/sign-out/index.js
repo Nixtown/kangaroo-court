@@ -8,7 +8,7 @@ const Logout = () => {
   useEffect(() => {
     const logoutUser = async () => {
       await supabase.auth.signOut();
-      router.push("/authentication/sign-in/basic"); // Redirect to sign-in page
+      router.push("/sign-in"); // Redirect to sign-in page
     };
 
     logoutUser();

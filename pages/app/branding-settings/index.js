@@ -21,18 +21,24 @@ const BrandingSettings = () => {
     primary_color: "#0033A0",
     secondary_color: "#0041CC",
     logo_url: "",
-    active_branding: true, // We'll always set the new/updated record to active
+    active_branding: true, // New/updated record will be active
   });
   const [uploading, setUploading] = useState(false);
   const [presets, setPresets] = useState([]);
 
-  // Fetch current branding settings on mount
+  // Fetch current branding settings for the logged-in user
   useEffect(() => {
     const fetchBranding = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User not authenticated:", authError);
+        return;
+      }
       const { data, error } = await supabase
         .from("branding")
         .select("*")
-        .eq("active_branding", true) // Only load the active branding record
+        .eq("active_branding", true)
+        .eq("user_id", user.id)
         .limit(1)
         .maybeSingle();
       if (error) console.error("Error fetching branding:", error);
@@ -40,14 +46,19 @@ const BrandingSettings = () => {
     };
     fetchBranding();
   }, []);
-  
 
-  // Fetch all presets for loading previous settings
+  // Fetch all presets for the logged-in user
   useEffect(() => {
     const fetchPresets = async () => {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.error("User not authenticated:", authError);
+        return;
+      }
       const { data, error } = await supabase
         .from("branding")
         .select("*")
+        .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
       if (error) console.error("Error fetching presets:", error);
       else setPresets(data || []);
@@ -91,58 +102,66 @@ const BrandingSettings = () => {
     setUploading(false);
   };
 
+  // Deactivate all branding records for the current user
   const deactivateAllBranding = async () => {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      return;
+    }
     const { error } = await supabase
       .from("branding")
       .update({ active_branding: false })
-      .not("id", "is", null);
+      .eq("user_id", user.id);
     if (error) {
       console.error("Error deactivating previous branding records:", error);
     }
   };
-  
 
-  // Save Branding Settings (update current active branding)
+  // Save Branding Settings (update current active branding for the current user)
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Deactivate all branding records first
     await deactivateAllBranding();
-
-    // Ensure the current record will be active
-    const brandingPayload = { ...branding, active_branding: true };
-
-    // Upsert (update if exists, insert otherwise)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      return;
+    }
+    const brandingPayload = { ...branding, active_branding: true, user_id: user.id };
     const { data, error } = await supabase
       .from("branding")
       .upsert(brandingPayload);
     if (error) console.error("Error saving branding settings:", error);
     else {
       console.log("Branding settings saved:", data);
-      // Optionally, refresh presets list
     }
     toast.success(
-        "Branding Saved / Activated",
-        {
-          position: "top-center", // Positions the toast at the top center
-          autoClose: 3000,        // Auto-closes after 3 seconds
-          hideProgressBar: false, // Displays the progress bar
-          closeOnClick: true,     // Allows dismissal on click
-          pauseOnHover: true,     // Pauses autoClose timer when hovered
-          draggable: true,        // Enables dragging to dismiss
-          theme: "dark",       // Uses the "colored" theme for a vibrant look
-          style: { width: "100%", maxWidth: "500px" },
-        }
-      );
+      "Branding Saved / Activated",
+      {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "dark",
+        style: { width: "100%", maxWidth: "500px" },
+      }
+    );
   };
 
-  // Save as New Preset (always insert new row)
+  // Save as New Preset (always insert a new row for the current user)
   const handleSaveNewPreset = async () => {
-    // Deactivate all existing presets
     await deactivateAllBranding();
-    // Remove existing id if present so a new one is generated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      return;
+    }
+    // Remove the id if it exists so a new one is generated
     const { id, ...presetWithoutId } = branding;
-    const newPreset = { ...presetWithoutId, preset_name: branding.preset_name || "New Preset", active_branding: true };
-
+    const newPreset = { ...presetWithoutId, preset_name: branding.preset_name || "New Preset", active_branding: true, user_id: user.id };
+  
     const { data, error } = await supabase
       .from("branding")
       .insert(newPreset)
@@ -152,20 +171,20 @@ const BrandingSettings = () => {
       console.log("New preset saved:", data);
       setPresets((prev) => [data[0], ...prev]);
     }
-
+  
     toast.success(
-        "New Preset Created and Activated",
-        {
-          position: "top-center", // Positions the toast at the top center
-          autoClose: 3000,        // Auto-closes after 3 seconds
-          hideProgressBar: false, // Displays the progress bar
-          closeOnClick: true,     // Allows dismissal on click
-          pauseOnHover: true,     // Pauses autoClose timer when hovered
-          draggable: true,        // Enables dragging to dismiss
-          theme: "dark",       // Uses the "colored" theme for a vibrant look
-          style: { width: "100%", maxWidth: "500px" },
-        }
-      );
+      "New Preset Created and Activated",
+      {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "dark",
+        style: { width: "100%", maxWidth: "500px" },
+      }
+    );
   };
 
   // Load a preset into the form when selected
@@ -185,8 +204,6 @@ const BrandingSettings = () => {
               <Grid item xs={12}>
                 <MDTypography variant="h5">Branding Settings</MDTypography>
               </Grid>
-
-              {/* Preset Loader */}
               <Grid item xs={12}>
                 <Autocomplete
                   options={presets}
@@ -203,8 +220,6 @@ const BrandingSettings = () => {
                   )}
                 />
               </Grid>
-
-              {/* Preset Name Input */}
               <Grid item xs={12}>
                 <MDInput
                   fullWidth
@@ -216,8 +231,6 @@ const BrandingSettings = () => {
                   inputProps={{ type: "text", autoComplete: "off" }}
                 />
               </Grid>
-
-              {/* Primary Color Picker */}
               <Grid item xs={12} sm={6} align="center">
                 <MDTypography align="center" variant="subtitle2">
                   Primary Color
@@ -227,8 +240,6 @@ const BrandingSettings = () => {
                   onChangeComplete={handlePrimaryColorChange}
                 />
               </Grid>
-
-              {/* Secondary Color Picker */}
               <Grid item xs={12} sm={6} align="center">
                 <MDTypography align="center" variant="subtitle2">
                   Secondary Color
@@ -238,8 +249,6 @@ const BrandingSettings = () => {
                   onChangeComplete={handleSecondaryColorChange}
                 />
               </Grid>
-
-              {/* Logo Preview */}
               <Grid item xs={12} align="center">
                 <MDBox
                   component="img"
@@ -255,8 +264,6 @@ const BrandingSettings = () => {
                   }}
                 />
               </Grid>
-
-              {/* Logo Upload */}
               <Grid item xs={12} sm={12} align="center">
                 <MDInput
                   type="file"
@@ -270,8 +277,6 @@ const BrandingSettings = () => {
                 )}
               </Grid>
             </Grid>
-
-            {/* Save Buttons */}
             <Grid container spacing={3} pt={3} pl={3}>
               <Grid item xs={12}>
                 <MDButton variant="gradient" color="dark" fullWidth type="submit">
