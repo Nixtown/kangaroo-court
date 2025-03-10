@@ -304,6 +304,20 @@ const routes = [
   { type: "divider", key: "divider-1" },
   {
     type: "collapse",
+    name: "Data",
+    key: "Data",
+    icon: <Icon fontSize="medium">folder</Icon>,
+    collapse: [
+      {
+        name: "Matches",
+        key: "matches",
+        route: "/app/matches",
+      },
+    ],
+  },
+  { type: "divider", key: "divider-3" },
+  {
+    type: "collapse",
     name: "Settings",
     key: "Scoreboardss",
     icon: <Icon fontSize="medium">settings</Icon>,

@@ -59,7 +59,7 @@ function Basic() {
     }
 
     // ✅ Redirect after successful login
-    router.push("/app/create-match");
+    router.push("/app/rally-controller");
   };
 
   // ✅ Handle Social Login (Google, GitHub)
