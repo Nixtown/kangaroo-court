@@ -15,9 +15,12 @@ import backgroundImage from "/assets/images/bg-profile.jpeg";
 import { supabase } from "/lib/supabaseClient";
 import Avatar from "@mui/material/Avatar";
 import { keyframes } from "@mui/material/styles";
-
+import Switch from "@mui/material/Switch";
+import { toast } from "react-toastify";
 // Default avatar as fallback
 import defaultLogo from "/assets/images/logos/elare-square.png";
+import Link from "next/link";
+import MDButton from "/components/MDButton"; 
 
 
 function GamesHeader({ children }) {
@@ -25,17 +28,21 @@ function GamesHeader({ children }) {
   const [tabValue, setTabValue] = useState(0);
   const [matchData, setMatchData] = useState(null);
   const [branding, setBranding] = useState(null);
-
   const router = useRouter();
   const { match_id } = router.query;
 
-  // Define the blinking animation keyframes
-const blinker = keyframes`
-50% {
-  opacity: 0;
-}
-`;
 
+  const glow = (color) => keyframes`
+  0% {
+    box-shadow: 0 0 5px 0 ${color};
+  }
+  50% {
+    box-shadow: 0 0 15px 5px ${color};
+  }
+  100% {
+    box-shadow: 0 0 5px 0 ${color};
+  }
+`;
 
   useEffect(() => {
     function handleTabsOrientation() {
@@ -78,7 +85,7 @@ const blinker = keyframes`
       .from("branding")
       .select("logo_url, primary_color")
       .eq("user_id", user.id)
-      .eq("active", true)
+      .eq("active_branding", true)
       .maybeSingle();
     if (error) {
       console.error("Error fetching branding:", error);
@@ -96,6 +103,40 @@ const blinker = keyframes`
   }, [matchData]);
 
   const handleSetTabValue = (event, newValue) => setTabValue(newValue);
+
+  const handleMakeActive = async () => {
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      toast.error("User not authenticated.");
+      return;
+    }
+    // Deactivate all matches for this user
+    const { error: updateAllError } = await supabase
+      .from("matches")
+      .update({ active_match: false })
+      .eq("user_id", user.id);
+    if (updateAllError) {
+      console.error("Error deactivating matches:", updateAllError);
+      toast.error("Error deactivating matches.");
+      return;
+    }
+    // Activate the current match
+    const { error: updateActiveError } = await supabase
+      .from("matches")
+      .update({ active_match: true })
+      .eq("id", match_id);
+    if (updateActiveError) {
+      console.error("Error activating match:", updateActiveError);
+      toast.error("Error activating match.");
+      return;
+    }
+    toast.success("Overlay is active for this match.");
+    // Update local state to reflect the change immediately
+    setMatchData(prev => prev ? { ...prev, active_match: true } : prev);
+  };
+  
 
   return (
     <MDBox position="relative" mb={5}>
@@ -130,17 +171,39 @@ const blinker = keyframes`
       >
         <Grid container spacing={3} alignItems="center">
           <Grid item>
+          {branding ? (
           <Avatar
-      src={branding && branding.logo_url ? branding.logo_url : defaultLogo.src}
-      alt="Logo"
-      sx={{
-        bgcolor: branding && branding.primary_color ? branding.primary_color : "primary.main",
-        width: "67px",
-        height: "67px",
-      }}
-      imgProps={{ style: { objectFit: "contain" } }}
-    />
-
+            src={branding.logo_url}
+            alt="Logo"
+            sx={{
+              boxSizing: "border-box",
+              bgcolor: branding.primary_color,
+              width: "100px",
+              height: "100px",
+              borderRadius: "50%",
+              border: "3px solid",
+              borderColor: branding.primary_color,
+              animation:
+                matchData && matchData.active_match
+                  ? `${glow(branding.primary_color)} 2s linear infinite`
+                  : "none",
+              transition: "all 0.3s ease-in-out",
+            }}
+            imgProps={{ style: { objectFit: "contain", width: "100%", height: "100%", padding: "8px" } }}
+          />
+        ) : (
+          // Fallback Avatar until branding loads
+          <Avatar
+            src={defaultLogo}
+            alt="Logo"
+            sx={{
+              width: "100px",
+              height: "100px",
+              borderRadius: "50%",
+              border: "3px solid black",
+            }}
+          />
+        )}
           </Grid>
           <Grid item>
             <MDBox height="100%" mt={0.5} lineHeight={1}>
@@ -153,48 +216,31 @@ const blinker = keyframes`
                   : "Team A vs Team B"}
               </MDTypography>
               <MDBox></MDBox>
-              <MDTypography variant="button" color="text" fontWeight="regular">
-                {matchData &&
-                (matchData.active_match === true ||
-                  matchData.active_match === "true" ||
-                  matchData.active_match === 1) ? (
-                  <>
-                    <MDBox
-                      component="span"
-                      sx={{
-                        display: "inline-block",
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: "green",
-                        marginRight: "4px",
-                        animation: `${blinker} 2s linear infinite`,
-                      }}
-                    />
-                    Active
-                  </>
-                ) : (
-                  <>
-                    <MDBox
-                      component="span"
-                      sx={{
-                        display: "inline-block",
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: "red",
-                        marginRight: "4px",
-                      }}
-                    />
-                    Inactive
-                  </>
-                )}
-              </MDTypography>
+              <MDTypography color="text" fontWeight="regular" variant="button">Overlay</MDTypography>
+              <Switch
+              checked={matchData?.active_match || false}
+              onChange={(e) => {
+                // Only allow toggling on; if already active, do nothing.
+                if (e.target.checked && !matchData?.active_match) {
+                  handleMakeActive();
+                }
+              }}
+              disabled={matchData?.active_match} // disable switch when already active
+            />
             </MDBox>
+          </Grid>
+          <Grid item sx={{ ml: "auto" }}>
+            <Link href={`/app/rally-controller/${match_id}`} passHref>
+              <MDButton variant="gradient" color="dark">
+                Launch Controller
+              </MDButton>
+            </Link>
           </Grid>
         </Grid>
         {children}
+  
       </Card>
+ 
     </MDBox>
   );
 }

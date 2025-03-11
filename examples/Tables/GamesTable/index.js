@@ -25,14 +25,15 @@ import DataTableHeadCell from "/examples/Tables/DataTable/DataTableHeadCell";
 import DataTableBodyCell from "/examples/Tables/DataTable/DataTableBodyCell";
 import { supabase } from "/lib/supabaseClient";
 import { toast } from "react-toastify";
+import IconButton from "@mui/material/IconButton";
 
 function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
   const router = useRouter();
   const { match_id } = router.query;
-  
   const [games, setGames] = useState([]);
   const [matchData, setMatchData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const isActive = matchData && matchData.active_match;
 
   // Fetch the game records
   useEffect(() => {
@@ -73,35 +74,7 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
     fetchMatchData();
   }, [match_id]);
 
-  // handleMakeActive: deactivate all matches for this user, then activate the match with id=match_id
-  const handleMakeActive = async () => {
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error("User not authenticated:", authError);
-      return;
-    }
-    // Deactivate all matches for this user
-    const { error: updateAllError } = await supabase
-      .from("matches")
-      .update({ active_match: false })
-      .eq("user_id", user.id);
-    if (updateAllError) {
-      console.error("Error deactivating matches:", updateAllError);
-      return;
-    }
-    // Activate the current match
-    const { error: updateActiveError } = await supabase
-      .from("matches")
-      .update({ active_match: true })
-      .eq("id", match_id);
-    if (updateActiveError) {
-      console.error("Error activating match:", updateActiveError);
-      return;
-    }
-    toast.success("Match is now active.");
-    router.push("/app/rally-controller");
-  };
+  
 
   // Define columns for the games table.
   const columns = useMemo(() => [
@@ -267,13 +240,10 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
   return (
     <MDBox>
       {/* Action buttons */}
-      <MDBox display="flex" justifyContent="space-between" alignItems="center" p={3}>
-        <MDButton variant="gradient" color="dark" onClick={() => router.back()}>
-          Back to Matches
-        </MDButton>
-        <MDButton variant="gradient" color="success" onClick={handleMakeActive} sx={{ ml: 2 }}>
-          Make Active
-        </MDButton>
+      <MDBox display="flex" alignItems="center" p={3}>
+      <IconButton onClick={() => router.push("/app/matches")}>
+      <Icon>arrow_back</Icon>
+    </IconButton>
         {entriesPerPage && (
           <MDBox display="flex" alignItems="center">
             <Autocomplete

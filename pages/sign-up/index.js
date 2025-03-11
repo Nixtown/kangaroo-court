@@ -67,7 +67,6 @@ function Cover() {
         match_title: "Championship Court",
         team_a_name: "Team A",
         team_b_name: "Team B",
-        active_match: true,
         current_game: 1,
         tournament_name: "Pickleball Broadcast",
       },

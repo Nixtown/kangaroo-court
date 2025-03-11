@@ -46,26 +46,7 @@ import Icon from "@mui/material/Icon";
 import profilePicture from "/assets/images/logos/elare-square.png";
 
 const routes = [
-  { type: "title", title: " Score Tracker", key: "title-scoreboard" },
-  {
-    type: "collapse",
-    name: "Controller",
-    key: "brooklyn-alice",
-    icon: <Icon fontSize="medium">build</Icon>,
-    noCollapse: true,
-    collapse: [
-        {
-          name: "Create Match",
-          key: "create-match",
-          route: "/app/create-match",
-        },
-        {
-          name: "Rally Controller",
-          key: "profile-overview",
-          route: "/app/rally-controller",
-        }
-      ],
-    },
+ 
   // {
   //   type: "collapse",
   //   name: "Dashboards",
@@ -286,8 +267,6 @@ const routes = [
   //     },
   //   ],
   // },
-  { type: "divider", key: "divider-2" },
-  { type: "title", title: "OBS Stream", key: "obs-stream" },
   {
     type: "collapse",
     name: "Scoreboards",

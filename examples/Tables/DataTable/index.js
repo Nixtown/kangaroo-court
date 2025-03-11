@@ -24,6 +24,7 @@ import DataTableHeadCell from "/examples/Tables/DataTable/DataTableHeadCell";
 import DataTableBodyCell from "/examples/Tables/DataTable/DataTableBodyCell";
 import { supabase } from "/lib/supabaseClient";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
   const [matches, setMatches] = useState([]);
@@ -58,7 +59,41 @@ function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, is
   
     fetchMatches();
   }, []);
-  
+
+  // Function to handle activation of a match
+const handleActivate = async (matchId) => {
+  // Get the authenticated user
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    console.error("User not authenticated:", authError);
+    toast.error("User not authenticated.");
+    return;
+  }
+  // Deactivate all matches for this user
+  const { error: deactivationError } = await supabase
+    .from("matches")
+    .update({ active_match: false })
+    .eq("user_id", user.id);
+  if (deactivationError) {
+    console.error("Error deactivating matches:", deactivationError);
+    toast.error("Error deactivating matches.");
+    return;
+  }
+  // Activate the selected match
+  const { error: activationError } = await supabase
+    .from("matches")
+    .update({ active_match: true })
+    .eq("id", matchId);
+  if (activationError) {
+    console.error("Error activating match:", activationError);
+    toast.error("Error activating match.");
+    return;
+  }
+  toast.success("Match activated!");
+  // Optionally, refresh your state or redirect if necessary.
+};
+
+
 
   // Define columns for your matches table.
   const columns = useMemo(
@@ -89,18 +124,23 @@ function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, is
         Cell: ({ value }) => <DataTableBodyCell>{value || "N/A"}</DataTableBodyCell>,
       },
       {
-        Header: "Status",
+        Header: "Overlay",
         accessor: "active_match",
-        Cell: ({ value }) =>
-          value ? (
-            <DataTableBodyCell>
-              <Icon sx={{ color: "green" }}>done</Icon> Active
-            </DataTableBodyCell>
-          ) : (
-            <DataTableBodyCell>
-              <Icon sx={{ color: "red" }}>close</Icon> Inactive
-            </DataTableBodyCell>
-          ),
+        Cell: ({ row, value }) => (
+          <DataTableBodyCell
+            onClick={() => handleActivate(row.original.id)}
+            sx={{ cursor: "pointer" }}
+          >
+            <Icon sx={{ color: value ? "green" : "red" }}>
+              {value ? "visibility" : "visibility_off"}
+            </Icon>
+          </DataTableBodyCell>
+        ),
+      },
+      {
+        Header: "Status",
+        accessor: "status",
+        Cell: ({ value }) => <DataTableBodyCell>{value || "N/A"}</DataTableBodyCell>,
       },
       {
         Header: "Actions",
@@ -129,6 +169,7 @@ function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, is
             team_a_name: match.team_a_name,
             team_b_name: match.team_b_name,
             active_match: match.active_match,
+            status: match.status
           }))
         : [],
     [matches]

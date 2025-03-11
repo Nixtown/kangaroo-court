@@ -17,15 +17,11 @@ import { useState } from "react";
 
 // @mui material components
 import Card from "@mui/material/Card";
-import Icon from "@mui/material/Icon";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import Divider from "@mui/material/Divider";
+
 
 // NextJS Material Dashboard 2 PRO components
 import MDBox from "/components/MDBox";
-import MDTypography from "/components/MDTypography";
-import MDButton from "/components/MDButton";
+
 
 // NextJS Material Dashboard 2 PRO examples
 import DashboardLayout from "/examples/LayoutContainers/DashboardLayout";

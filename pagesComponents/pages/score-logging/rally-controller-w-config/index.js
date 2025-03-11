@@ -27,6 +27,7 @@ const RallyControllerWConfig = () => {
   const [gameData, setGameData] = useState([]);
   const isSmallScreen = useMediaQuery('(max-width:850px)');
   const router = useRouter();
+  const { match_id } = router.query;
 
 
   
@@ -70,7 +71,7 @@ useEffect(() => {
     const { data, error } = await supabase
       .from('matches')
       .select('*')
-      .eq('active_match', true)
+      .eq('id', match_id)
       .eq('user_id', user.id) // Only load match for the current user
       .single(); // Assuming there's only one active match per user
 
@@ -613,15 +614,29 @@ useEffect(() => {
             </Grid>
           </Grid>
           <MDBox>
-            <ButtonGroup variant="outlined" sx={{ height: "300px", width: "100%" }} aria-label="Basic button group" >
+            <ButtonGroup variant="outlined" sx={{ height: "200px", width: "100%",  }} aria-label="Basic button group" >
               <MDButton
                       variant="contained"
                       sx={{
-                        backgroundColor: branding.primary_color, // Primary color applied correctly
+                        backgroundColor: branding.primary_color,
                         '&:hover': {
-                          backgroundColor: branding.primary_color, // Ensures hover effect works
+                          backgroundColor: branding.primary_color,
+                        },
+                        '&:active': {
+                          backgroundColor: branding.primary_color,
+                        },
+                        '&:focus': {
+                          backgroundColor: branding.primary_color,
+                          boxShadow: 'none !important',
+                        },
+                        '&:focus:not(:hover)': {
+                          backgroundColor: branding.primary_color,
+                          boxShadow: 'none !important',
                         },
                       }}
+                      
+                      
+                      
                       color="dark"
                       fullWidth
                       size="large"

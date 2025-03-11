@@ -27,7 +27,6 @@ const CreateMatch = () => {
     match_title: "Center Court: Round of 8",
     team_a_name: "Tulsa Titans",
     team_b_name: "PB Tulsa",
-    active_match: true,
     current_game: 1,
   };
 
@@ -154,11 +153,6 @@ const CreateMatch = () => {
       return;
     }
 
-    // Deactivate only matches that belong to the current user
-    await supabase
-      .from("matches")
-      .update({ active_match: false })
-      .eq("user_id", user.id);
 
     // Merge user_id into matchData
     const matchDataWithUser = { ...matchData, user_id: user.id };
@@ -200,7 +194,7 @@ const CreateMatch = () => {
       }
 
       // Redirect to match controller
-      router.push("/app/rally-controller");
+      router.push(`/app/view-games/${matchId}`);
 
   }
 }
@@ -302,7 +296,7 @@ const { data: updatedPreset, error: updateError } = await supabase
               <Grid item xs={12}>
                 <MDTypography variant="h5">Match Information</MDTypography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <Autocomplete
                   options={matchPresets}
                   getOptionLabel={(option) =>
@@ -315,7 +309,7 @@ const { data: updatedPreset, error: updateError } = await supabase
                 />
               </Grid>
 
-              <Grid item xs={12} sm={12}>
+              <Grid item xs={12} sm={6}>
                 <MDInput
                   fullWidth
                   label="Preset Name"
@@ -325,19 +319,7 @@ const { data: updatedPreset, error: updateError } = await supabase
                   inputProps={{ type: "text", autoComplete: "" }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={12}>
-                <MDInput
-                  fullWidth
-                  label="Best Of"
-                  value={matchData.best_of}
-                  required
-                  onChange={(e) => {
-                    const newValue = Math.min(7, Math.max(1, parseInt(e.target.value, 10) || 1));
-                    handleChange("best_of", newValue);
-                  }}
-                  inputProps={{ type: "number", autoComplete: "" }}
-                />
-              </Grid>
+           
               <Grid item xs={12} sm={6}>
                 <MDInput
                   fullWidth
@@ -378,14 +360,27 @@ const { data: updatedPreset, error: updateError } = await supabase
                   inputProps={{ type: "text", autoComplete: "" }}
                 />
               </Grid>
+              <Grid item xs={12} sm={2}>
+                <MDInput
+                  fullWidth
+                  label="Best Of"
+                  value={matchData.best_of}
+                  required
+                  onChange={(e) => {
+                    const newValue = Math.min(7, Math.max(1, parseInt(e.target.value, 10) || 1));
+                    handleChange("best_of", newValue);
+                  }}
+                  inputProps={{ type: "number", autoComplete: "" }}
+                />
+              </Grid>
             </Grid>
 
             {/* Mapping section for game settings */}
             {gameData.map((game, index) => (
-              <Grid container spacing={3} pt={3} pb={3} px={3} key={game.id || game.game_number || index}>
+              <Grid container spacing={3} pt={3} pb={3} px={0} key={game.id || game.game_number || index}>
                 <Grid item xs={12} sm={12}>
-                  <Grid container sx={{ bgcolor: "#f1f5ff", paddingLeft: "0px", borderRadius: "0.4rem" }}>
-                    <MDTypography variant="body">
+                  <Grid container sx={{ bgcolor: "#f1f5ff", padding: "6px", borderRadius: "0.4rem" }}>
+                    <MDTypography variant="subtitle2">
                       Game: {index + 1}
                     </MDTypography>
                     {game.scoring_type === "Rally" && (

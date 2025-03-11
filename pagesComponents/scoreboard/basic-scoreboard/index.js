@@ -130,43 +130,58 @@ export default function BasicScoreBoard() {
     // Wait until the router is ready
     if (!router.isReady) return null;
   
-    let userId;
-    const { token } = router.query;
-    
-    if (token) {
-      // If a token is provided, look up the user by overlay_token
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("overlay_token", token)
-        .maybeSingle();
-      if (userError || !userData) {
-        console.error("Error fetching user by overlay token:", userError);
-        return null;
-      }
-      userId = userData.id;
-    } else {
-      // If no token, fall back to the currently logged-in user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        console.error("User not authenticated and no token provided:", authError);
-        return null;
-      }
-      userId = user.id;
-    }
+    const { match_id, token } = router.query;
   
-    // Now, fetch the active match for that user
-    const { data, error } = await supabase
-      .from("matches")
-      .select("*")
-      .eq("active_match", true)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (error) {
-      console.error("Error fetching active match:", error);
-      return null;
+    if (match_id) {
+      // If match_id exists in the URL, fetch that match regardless of active status.
+      const { data, error } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("id", match_id)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching match by id:", error);
+        return null;
+      }
+      return data;
+    } else {
+      // If no match_id, then check for a token.
+      let userId;
+      if (token) {
+        // If a token is provided, look up the user by overlay_token.
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("id")
+          .eq("overlay_token", token)
+          .maybeSingle();
+        if (userError || !userData) {
+          console.error("Error fetching user by overlay token:", userError);
+          return null;
+        }
+        userId = userData.id;
+      } else {
+        // If no token, fall back to the currently logged-in user.
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+          console.error("User not authenticated and no token provided:", authError);
+          return null;
+        }
+        userId = user.id;
+      }
+  
+      // Now, fetch the active match for that user.
+      const { data, error } = await supabase
+        .from("matches")
+        .select("*")
+        .eq("active_match", true)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error) {
+        console.error("Error fetching active match:", error);
+        return null;
+      }
+      return data;
     }
-    return data;
   };
   
 

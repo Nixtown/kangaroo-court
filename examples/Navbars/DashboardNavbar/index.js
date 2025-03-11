@@ -55,6 +55,7 @@ import {
   setOpenConfigurator,
 } from "/context";
 
+
 function DashboardNavbar({ absolute, light, isMini }) {
   const [navbarType, setNavbarType] = useState();
   const [controller, dispatch] = useMaterialUIController();
@@ -102,6 +103,16 @@ function DashboardNavbar({ absolute, light, isMini }) {
     setOpenConfigurator(dispatch, !openConfigurator);
   const handleOpenMenu = (event) => setOpenMenu(event.currentTarget);
   const handleCloseMenu = () => setOpenMenu(false);
+  const router = useRouter();
+
+  let routeSegments = router.pathname.split("/").slice(1);
+
+
+    // If the last segment is a dynamic param (starts with "["), remove it.
+    if (routeSegments.length > 0 && routeSegments[routeSegments.length - 1].startsWith("[")) {
+      routeSegments.pop();
+    }
+
 
   // Render the notifications menu
   const renderMenu = () => (
@@ -160,7 +171,7 @@ function DashboardNavbar({ absolute, light, isMini }) {
         >
           <Breadcrumbs
             icon="home"
-            title={route[route.length - 1]}
+            title={routeSegments[routeSegments.length - 1] || ""}
             route={route}
             light={light}
           />
