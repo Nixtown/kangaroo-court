@@ -26,6 +26,8 @@ import DataTableBodyCell from "/examples/Tables/DataTable/DataTableBodyCell";
 import { supabase } from "/lib/supabaseClient";
 import { toast } from "react-toastify";
 import IconButton from "@mui/material/IconButton";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+
 
 function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
   const router = useRouter();
@@ -198,6 +200,7 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
     setPageSize,
     setGlobalFilter,
     state: { pageIndex, pageSize, globalFilter },
+    selectedFlatRows,
   } = tableInstance;
 
   const defaultValue = entriesPerPage.defaultValue || 10;
@@ -237,13 +240,59 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
     );
   }
 
+
+
+// Delete handler for selected games
+const handleDeleteSelected = async () => {
+  // Extract the selected rows’ original game data.
+  const selectedGames = selectedFlatRows.map((row) => row.original);
+  const idsToDelete = selectedGames.map((game) => game.id);
+
+  // Delete from Supabase "game_stats" table.
+  const { error } = await supabase.from("game_stats").delete().in("id", idsToDelete);
+  if (error) {
+    console.error("Error deleting games:", error);
+    toast.error("Error deleting selected games.");
+  } else {
+    // Update the state to remove the deleted games.
+    setGames((prev) => {
+      const updatedGames = prev.filter((game) => !idsToDelete.includes(game.id));
+      // Update the match's best_of field to reflect the new number of games.
+      updateMatchBestOf(updatedGames.length);
+      return updatedGames;
+    });
+    toast.success("Selected games deleted successfully.");
+  }
+};
+
+// Function to update the match record's best_of field.
+const updateMatchBestOf = async (newCount) => {
+  const { match_id } = router.query;
+  if (!match_id) return;
+  const { error } = await supabase
+    .from("matches")
+    .update({ best_of: newCount })
+    .eq("id", match_id);
+  if (error) {
+    console.error("Error updating match best_of:", error);
+    toast.error("Error updating match game count.");
+  }
+};
+
+
+
   return (
     <MDBox>
       {/* Action buttons */}
       <MDBox display="flex" alignItems="center" p={3}>
       <IconButton onClick={() => router.push("/app/matches")}>
       <Icon>arrow_back</Icon>
+     
     </IconButton>
+    <IconButton onClick={handleDeleteSelected} sx={{ ml: 2, color: "error.main" }}>
+  <DeleteForeverIcon />
+</IconButton>
+
         {entriesPerPage && (
           <MDBox display="flex" alignItems="center">
             <Autocomplete

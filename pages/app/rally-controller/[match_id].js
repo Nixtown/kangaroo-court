@@ -25,14 +25,21 @@ import RallyControllerHeader from "../../../pagesComponents/rally-controller-hea
 
 const RallyControllerDash = () => {
 
+  const [parentMatchData, setParentMatchData] = useState({
+    current_game: 1,
+    team_a_name: "Team A",
+    team_b_name: "Team B",
+    best_of: 3,
+  });
+  
   return (
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox>
         <Grid container spacing={1}>
           <Grid item xs={12} lg={8} >
-            <RallyControllerHeader/>
-            <RallyControllerWConfig/>
+            <RallyControllerHeader parentMatchData={parentMatchData}/>
+            <RallyControllerWConfig setParentMatchData={setParentMatchData}/>
           </Grid>
         </Grid>
       </MDBox>

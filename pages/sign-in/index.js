@@ -25,7 +25,8 @@ import MDButton from "/components/MDButton";
 import BasicLayout from "/pagesComponents/authentication/components/BasicLayout";
 
 // Images
-import bgImage from "/assets/images/bg-sign-in-basic.jpeg";
+import bgImage from "/assets/images/illustrations/pickleball-on-court-blue.jpg";
+
 
 function Basic() {
   const router = useRouter();
@@ -59,17 +60,9 @@ function Basic() {
     }
 
     // ✅ Redirect after successful login
-    router.push("/app/rally-controller");
+    router.push("/app/matches");
   };
 
-  // ✅ Handle Social Login (Google, GitHub)
-  const handleSocialLogin = async (provider) => {
-    const { error } = await supabase.auth.signInWithOAuth({ provider });
-
-    if (error) {
-      setErrorMessage(error.message);
-    }
-  };
 
   return (
     <BasicLayout image={bgImage}>
@@ -86,7 +79,7 @@ function Basic() {
           textAlign="center"
         >
           <MDTypography variant="h4" fontWeight="medium" color="white" mt={1}>
-            Sign in
+            Kangaroo Court
           </MDTypography>
         </MDBox>
         <MDBox pt={4} pb={3} px={3}>

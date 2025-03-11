@@ -207,17 +207,33 @@ function GamesHeader({ children }) {
           </Grid>
           <Grid item>
             <MDBox height="100%" mt={0.5} lineHeight={1}>
-              <MDTypography variant="h4" fontWeight="medium">
-                {matchData ? matchData.tournament_name : "Tournament Name"}
-              </MDTypography>
-              <MDTypography variant="button" color="text" fontWeight="regular">
+             
+              <MDTypography variant="h4" color="dark" fontWeight="bold">
                 {matchData
                   ? `${matchData.team_a_name} vs ${matchData.team_b_name}`
                   : "Team A vs Team B"}
               </MDTypography>
+              <MDTypography variant="subtitle2" color="text"  sx={{ fontWeight: "regular" }}>
+                {matchData ? matchData.tournament_name : "Tournament Name"}
+              </MDTypography>
               <MDBox></MDBox>
-              <MDTypography color="text" fontWeight="regular" variant="button">Overlay</MDTypography>
-              <Switch
+              <MDTypography variant="button" color="text" sx={{ fontWeight: "regular" }}>Status:{matchData
+                  ? ` ${matchData.status}`
+                  : "Not Started"}</MDTypography>
+            </MDBox>
+          </Grid>
+          <Grid item sx={{ ml: "auto" }}>
+          <Link href={`/app/view-games/edit/${match_id}`} passHref>
+            <MDButton variant="gradient" color="dark" sx={{ mr: 2 }}>
+              Edit Match
+            </MDButton>
+          </Link>
+            <Link href={`/app/rally-controller/${match_id}`} passHref>
+              <MDButton variant="gradient" color="dark">
+                Track Score
+              </MDButton>
+            </Link>
+            <Switch
               checked={matchData?.active_match || false}
               onChange={(e) => {
                 // Only allow toggling on; if already active, do nothing.
@@ -227,14 +243,6 @@ function GamesHeader({ children }) {
               }}
               disabled={matchData?.active_match} // disable switch when already active
             />
-            </MDBox>
-          </Grid>
-          <Grid item sx={{ ml: "auto" }}>
-            <Link href={`/app/rally-controller/${match_id}`} passHref>
-              <MDButton variant="gradient" color="dark">
-                Launch Controller
-              </MDButton>
-            </Link>
           </Grid>
         </Grid>
         {children}

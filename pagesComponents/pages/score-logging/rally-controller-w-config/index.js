@@ -21,13 +21,15 @@ import MDInput from "/components/MDInput";
 import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
 import next from "next";
 
-const RallyControllerWConfig = () => {
+const RallyControllerWConfig = ({setParentMatchData}) => {
   const [branding, setBranding] = useState(null);
   const [matchData, setMatchData] = useState(null);
   const [gameData, setGameData] = useState([]);
   const isSmallScreen = useMediaQuery('(max-width:850px)');
   const router = useRouter();
   const { match_id } = router.query;
+
+
 
 
   
@@ -178,8 +180,10 @@ useEffect(() => {
         console.error("Error updating match current_game:", error);
       } else {
         setMatchData(prev => ({ ...prev, current_game: newGameNumber }));
+        setParentMatchData(prev => ({ ...prev, current_game: newGameNumber }));
       }
     }
+
   };
   
 
@@ -587,11 +591,6 @@ useEffect(() => {
     <MDBox>
       <Card id="incriment-games"sx={{ width: "100%"  } }>
       <MDBox p={3} >
-          <MDBox>
-            <MDTypography variant="h5" textAlign="center" mb={1}>
-              {`Best of ${matchData.best_of} | Game: ${matchData.current_game}`}
-            </MDTypography>
-          </MDBox>
           <Grid container spacing={0} pb={3}>
             <Grid item xs={12} display="flex" justifyContent="center">
               <Grid item >

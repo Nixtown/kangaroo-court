@@ -25,6 +25,13 @@ import DataTableBodyCell from "/examples/Tables/DataTable/DataTableBodyCell";
 import { supabase } from "/lib/supabaseClient";
 import Link from "next/link";
 import { toast } from "react-toastify";
+import IconButton from "@mui/material/IconButton";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import AddIcon from "@mui/icons-material/Add";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+
+
+
 
 function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
   const [matches, setMatches] = useState([]);
@@ -148,7 +155,7 @@ const handleActivate = async (matchId) => {
         Cell: ({ row }) => (
           <Link href={`/app/view-games/${row.original.id}`} passHref>
             <MDButton variant="gradient" color="dark" size="small">
-              View Games
+              View Match
             </MDButton>
           </Link>
         ),
@@ -355,13 +362,13 @@ const handleMakeActive = async () => {
           <MDBox display="flex" justifyContent="space-between" alignItems="center" p={3}>
                <MDBox mb={2}>
                <Link href="/app/create-match" passHref>
-          <MDButton variant="gradient" color="dark">
-            New Match
-          </MDButton>
-          </Link>
-                <MDButton variant="gradient" color="dark" onClick={handleDeleteSelected} sx={{ ml: 2 }}>
-                  Delete Selected
-                </MDButton>
+  <MDButton variant="gradient" color="dark" startIcon={<AddIcon />}>
+    New Match
+  </MDButton>
+</Link>
+          <IconButton onClick={handleDeleteSelected} sx={{ ml: 2, color: "error.main" }}>
+  <DeleteForeverIcon />
+</IconButton>
       
               </MDBox>
 

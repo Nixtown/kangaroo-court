@@ -16,7 +16,7 @@ import { supabase } from "/lib/supabaseClient";
 import defaultLogo from "/assets/images/logos/elare-square.png";
 import { Typography } from "@mui/material";
 
-function RallyControllerHeader({ children }) {
+function RallyControllerHeader({ children, parentMatchData }) {
   const [matchData, setMatchData] = useState(null);
   const [branding, setBranding] = useState(null);
   const router = useRouter();
@@ -37,6 +37,10 @@ function RallyControllerHeader({ children }) {
       box-shadow: 0 0 5px 0 ${color};
     }
   `;
+
+  useEffect(() => {
+    console.log("Header updated:", parentMatchData);
+  }, [parentMatchData]); 
 
   // Fetch match data from Supabase
   useEffect(() => {
@@ -158,55 +162,75 @@ function RallyControllerHeader({ children }) {
     toast.success("Overlay is active for this match.");
     setMatchData(prev => prev ? { ...prev, active_match: true } : prev);
   };
+// Change match status and persist timer data (start time and duration).
+const handleMatchStatusChange = async () => {
+  if (!matchData) return;
+  let newStatus;
+  if (matchData.status === "Not Started") {
+    newStatus = "In Progress";
+    const newStartTime = new Date().toISOString();
 
-  // Change match status and persist timer data (start time and duration).
-  const handleMatchStatusChange = async () => {
-    if (!matchData) return;
-    let newStatus;
-    if (matchData.status === "Not Started") {
-      newStatus = "In Progress";
-      // Save the start time to the database.
-      const newStartTime = new Date().toISOString();
-      const { error } = await supabase
-        .from("matches")
-        .update({ status: newStatus, start_time: newStartTime })
-        .eq("id", matchData.id);
-      if (error) {
-        console.error("Error updating match status:", error);
-        toast.error("Error updating match status.");
-        return;
-      }
-      setStartTime(new Date(newStartTime));
-      setMatchData((prev) => ({
-        ...prev,
-        status: newStatus,
-        start_time: newStartTime,
-      }));
-      toast.success(`Match started at ${newStartTime}`);
-    } else if (matchData.status === "In Progress") {
-      newStatus = "Completed";
-      // Calculate elapsed duration in seconds.
-      const elapsedDuration = Date.now() - new Date(matchData.start_time).getTime();
-      const elapsedSeconds = Math.floor(elapsedDuration / 1000);
-      // Save the final duration to the database.
-      const { error } = await supabase
-        .from("matches")
-        .update({ status: newStatus, duration: elapsedSeconds })
-        .eq("id", matchData.id);
-      if (error) {
-        console.error("Error updating match status:", error);
-        toast.error("Error updating match status.");
-        return;
-      }
-      setMatchData((prev) => ({
-        ...prev,
-        status: newStatus,
-        duration: elapsedSeconds,
-      }));
-      setTimerActive(false);
-      toast.success(`Match completed with duration ${formatTime(elapsedSeconds)}`);
+    // Get the authenticated user.
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error("User not authenticated:", authError);
+      return;
     }
-  };
+
+    // Turn off any other active matches for this user.
+    const { error: deactiveError } = await supabase
+      .from("matches")
+      .update({ active_match: false })
+      .neq("id", matchData.id)
+      .eq("user_id", user.id);
+    if (deactiveError) {
+      console.error("Error deactivating other matches:", deactiveError);
+      toast.error("Error deactivating other matches.");
+      return;
+    }
+
+    // Update the current match to start and mark it as active.
+    const { error } = await supabase
+      .from("matches")
+      .update({ status: newStatus, start_time: newStartTime, active_match: true })
+      .eq("id", matchData.id);
+    if (error) {
+      console.error("Error updating match status:", error);
+      toast.error("Error updating match status.");
+      return;
+    }
+    setStartTime(new Date(newStartTime));
+    setMatchData((prev) => ({
+      ...prev,
+      status: newStatus,
+      start_time: newStartTime,
+      active_match: true,
+    }));
+    toast.success(`Match started at ${newStartTime}`);
+  } else if (matchData.status === "In Progress") {
+    newStatus = "Completed";
+    const elapsedDuration = Date.now() - new Date(matchData.start_time).getTime();
+    const elapsedSeconds = Math.floor(elapsedDuration / 1000);
+    const { error } = await supabase
+      .from("matches")
+      .update({ status: newStatus, duration: elapsedSeconds })
+      .eq("id", matchData.id);
+    if (error) {
+      console.error("Error updating match status:", error);
+      toast.error("Error updating match status.");
+      return;
+    }
+    setMatchData((prev) => ({
+      ...prev,
+      status: newStatus,
+      duration: elapsedSeconds,
+    }));
+    setTimerActive(false);
+    toast.success(`Match completed with duration ${formatTime(elapsedSeconds)}`);
+  }
+};
+
+
 
   return (
     <MDBox position="relative" mb={3}>
@@ -250,14 +274,19 @@ function RallyControllerHeader({ children }) {
           </Grid>
           <Grid item>
             <MDBox height="100%" mt={0.5} lineHeight={1}>
-              <MDTypography variant="h4" fontWeight="medium">
+              {/* <MDTypography variant="h4" fontWeight="medium">
                 {matchData ? matchData.tournament_name : "Tournament Name"}
-              </MDTypography>
-              <MDTypography variant="button" color="text" fontWeight="regular">
+              </MDTypography> */}
+              <MDTypography variant="h4" color="dark" fontWeight="bold">
                 {matchData
                   ? `${matchData.team_a_name} vs ${matchData.team_b_name}`
                   : "Team A vs Team B"}
               </MDTypography>
+              <MDBox>
+            <MDTypography variant="button">
+              {parentMatchData ? `Best of ${parentMatchData.best_of} | Game: ${parentMatchData.current_game}` : "Best of 3 : Game 1"}
+            </MDTypography>
+          </MDBox>
               <MDBox mt={1}>
                 <Typography variant="button" sx={{ fontWeight: "bold" }}>
                   {formatTime(elapsedTime)}
@@ -287,7 +316,7 @@ function RallyControllerHeader({ children }) {
             </MDButton>
             <Link href={`/app/view-games/${match_id}`} passHref>
               <MDButton variant="gradient" color="dark">
-                Match Overview
+                View Match
               </MDButton>
             </Link>
             <Switch

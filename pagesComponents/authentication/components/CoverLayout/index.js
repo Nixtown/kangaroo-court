@@ -36,7 +36,7 @@ import pageRoutes from "/routes/page.routes";
 function CoverLayout({ coverHeight, image, children }) {
   return (
     <PageLayout>
-      <DefaultNavbar
+      {/* <DefaultNavbar
         routes={pageRoutes}
         action={{
           type: "external",
@@ -46,7 +46,7 @@ function CoverLayout({ coverHeight, image, children }) {
         }}
         transparent
         light
-      />
+      /> */}
       <MDBox
         width="calc(100% - 2rem)"
         minHeight={coverHeight}
@@ -82,7 +82,7 @@ function CoverLayout({ coverHeight, image, children }) {
           </Grid>
         </Grid>
       </MDBox>
-      <Footer />
+      {/* <Footer /> */}
     </PageLayout>
   );
 }

@@ -18,7 +18,7 @@ import { toast } from "react-toastify";
 import CoverLayout from "/pagesComponents/authentication/components/CoverLayout";
 
 // Images
-import bgImage from "/assets/images/bg-sign-up-cover.jpeg";
+import bgImage from "/assets/images/illustrations/pickleball-on-court-blue.jpg";
 
 function Cover() {
   const router = useRouter();
@@ -170,10 +170,10 @@ function Cover() {
           textAlign="center"
         >
           <MDTypography variant="h4" fontWeight="medium" color="white" mt={1}>
-            Join us today
+            Join Kangaroo Court
           </MDTypography>
           <MDTypography display="block" variant="button" color="white" my={1}>
-            Enter your email and password to register
+          Sign up to track live pickleball matches, update scores in real-time, and customize overlays.
           </MDTypography>
         </MDBox>
         <MDBox pt={4} pb={3} px={3}>
