@@ -21,18 +21,15 @@ import MDInput from "/components/MDInput";
 import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
 import next from "next";
 
-const RallyControllerWConfig = ({setParentMatchData}) => {
+const RallyControllerWConfig = ({setMatchData, matchData}) => {
   const [branding, setBranding] = useState(null);
-  const [matchData, setMatchData] = useState(null);
   const [gameData, setGameData] = useState([]);
   const isSmallScreen = useMediaQuery('(max-width:850px)');
   const router = useRouter();
   const { match_id } = router.query;
 
 
-
-
-  
+ 
   useEffect(() => {
     const fetchActiveBranding = async () => {
       // Get the current authenticated user
@@ -180,16 +177,10 @@ useEffect(() => {
         console.error("Error updating match current_game:", error);
       } else {
         setMatchData(prev => ({ ...prev, current_game: newGameNumber }));
-        setParentMatchData(prev => ({ ...prev, current_game: newGameNumber }));
       }
     }
-
   };
   
-
-
-
-
   const handleRally = (rallyWon) => {
     // Determine the current game index from matchData (assuming current_game is 1-indexed)
     const currentGameIndex = matchData.current_game - 1;
@@ -578,9 +569,7 @@ useEffect(() => {
   
     return game;
   }
-  
-  
- 
+
 
   // Render your component conditionally based on whether matchData or gameData is loaded
   if (!matchData || gameData.length === 0 || !branding) {
@@ -613,6 +602,30 @@ useEffect(() => {
             </Grid>
           </Grid>
           <MDBox>
+          {matchData.status === "Not Started" && (
+            <div style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0, 0, 0, 0.8)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "0.75rem",
+              zIndex: 1000,
+            }}>
+                <MDTypography variant="h5" color="white" gutterBottom>
+                  Match Not Started
+                </MDTypography>
+                <MDTypography variant="body1" color="white" gutterBottom>
+                  Please click "Start Match" to begin logging scores.
+                </MDTypography>
+              
+              </div>
+            )}
             <ButtonGroup variant="outlined" sx={{ height: "200px", width: "100%",  }} aria-label="Basic button group" >
               <MDButton
                       variant="contained"

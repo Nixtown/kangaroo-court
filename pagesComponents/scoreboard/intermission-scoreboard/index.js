@@ -12,6 +12,7 @@ export default function IntermissionScoreboard() {
   const router = useRouter();
   const [branding, setBranding] = useState(null);
   const [activeMatch, setActiveMatch] = useState(null);
+  const [userId, setUserId] = useState(null)
   const [activeGames, setActiveGames] = useState(null);
   const gamesData = activeGames ?? 
     [{  team_a_score: 0, 
@@ -158,6 +159,7 @@ export default function IntermissionScoreboard() {
         return null;
       }
       userId = user.id;
+      setUserId(userId);
     }
   
     // Now, fetch the active match for that user
@@ -210,7 +212,7 @@ export default function IntermissionScoreboard() {
           event: "*", // Listen for any events (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "matches",
-          filter: `id=eq.${activeMatch.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           console.log("Realtime match update:", payload);
@@ -299,7 +301,7 @@ export default function IntermissionScoreboard() {
                   <MDBox
                     component="img"
                     src={branding.logo_url}
-                    sx={{ width: "80px", height: "auto"}}
+                    sx={{ width: "80px", padding: "12px", height: "auto"}}
                   >
                   </MDBox>
                 </Grid>

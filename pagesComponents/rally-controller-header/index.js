@@ -16,8 +16,7 @@ import { supabase } from "/lib/supabaseClient";
 import defaultLogo from "/assets/images/logos/elare-square.png";
 import { Typography } from "@mui/material";
 
-function RallyControllerHeader({ children, parentMatchData }) {
-  const [matchData, setMatchData] = useState(null);
+function RallyControllerHeader({ children, setMatchData, matchData}) {
   const [branding, setBranding] = useState(null);
   const router = useRouter();
   const { match_id } = router.query;
@@ -37,10 +36,6 @@ function RallyControllerHeader({ children, parentMatchData }) {
       box-shadow: 0 0 5px 0 ${color};
     }
   `;
-
-  useEffect(() => {
-    console.log("Header updated:", parentMatchData);
-  }, [parentMatchData]); 
 
   // Fetch match data from Supabase
   useEffect(() => {
@@ -206,6 +201,7 @@ const handleMatchStatusChange = async () => {
       start_time: newStartTime,
       active_match: true,
     }));
+ 
     toast.success(`Match started at ${newStartTime}`);
   } else if (matchData.status === "In Progress") {
     newStatus = "Completed";
@@ -228,6 +224,7 @@ const handleMatchStatusChange = async () => {
     setTimerActive(false);
     toast.success(`Match completed with duration ${formatTime(elapsedSeconds)}`);
   }
+
 };
 
 
@@ -284,7 +281,7 @@ const handleMatchStatusChange = async () => {
               </MDTypography>
               <MDBox>
             <MDTypography variant="button">
-              {parentMatchData ? `Best of ${parentMatchData.best_of} | Game: ${parentMatchData.current_game}` : "Best of 3 : Game 1"}
+              {matchData ? `Best of ${matchData.best_of} | Game: ${matchData.current_game}` : "Best of 3 : Game 1"}
             </MDTypography>
           </MDBox>
               <MDBox mt={1}>

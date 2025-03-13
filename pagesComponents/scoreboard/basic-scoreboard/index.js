@@ -14,6 +14,7 @@ export default function BasicScoreBoard() {
   const [branding, setBranding] = useState(null);
   const [activeMatch, setActiveMatch] = useState(null);
   const [activeGames, setActiveGames] = useState(null);
+  const [userId, setUserId] = useState(null)
   const gamesData = activeGames ?? 
     [{  team_a_score: 0, 
         team_b_score: 0, 
@@ -74,22 +75,27 @@ export default function BasicScoreBoard() {
       }
       return 0;
     })();
-      
-      
-    useEffect(() => {
-      console.log("Router ready:", router.isReady, "Token:", router.query.token);
-      if (!router.isReady) return;
-      // ... rest of your fetch logic
-    }, [router.isReady, router.query.token]);
-    
-  
 
+    useEffect(() => {
+      const fetchActiveBranding = async () => {
+        const { data, error } = await supabase
+          .from("branding")
+          .select("*")
+          .eq("active_branding", true)
+          .limit(1)
+          .maybeSingle();
+        if (error) {
+          console.error("Error fetching active branding:", error);
+        } else {
+          setBranding(data);
+        }
+      };
+  
+      fetchActiveBranding();
+    }, []);
   
   useEffect(() => {
     document.body.classList.add("obs-transparent");
-  
-
-
     loadActiveMatchAndGame();
 
     return () => {
@@ -108,29 +114,14 @@ export default function BasicScoreBoard() {
     }
   };
 
-  useEffect(() => {
-    const fetchActiveBranding = async () => {
-      const { data, error } = await supabase
-        .from("branding")
-        .select("*")
-        .eq("active_branding", true)
-        .limit(1)
-        .maybeSingle();
-      if (error) {
-        console.error("Error fetching active branding:", error);
-      } else {
-        setBranding(data);
-      }
-    };
 
-    fetchActiveBranding();
-  }, []);
   
   const fetchActiveMatch = async () => {
     // Wait until the router is ready
     if (!router.isReady) return null;
   
     const { match_id, token } = router.query;
+    console.log(userId);
   
     if (match_id) {
       // If match_id exists in the URL, fetch that match regardless of active status.
@@ -159,6 +150,7 @@ export default function BasicScoreBoard() {
           return null;
         }
         userId = userData.id;
+        setUserId(userId);
       } else {
         // If no token, fall back to the currently logged-in user.
         const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -201,10 +193,23 @@ export default function BasicScoreBoard() {
       return data;
   };
 
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) {
+        console.error("Error fetching user:", error);
+        return;
+      }
+      setUserId(user.id);
+    };
+    getUserId();
+  }, []);
+
     //// Realtime Updates with Supabase v2 ////
   useEffect(() => {
     // Wait until activeMatch is available
-    if (!activeMatch?.id) return;
+    if (!activeMatch?.id || !userId) return;
+
 
     // Function to reload all data
     const refreshData = () => {
@@ -222,14 +227,20 @@ export default function BasicScoreBoard() {
           event: "*", // Listen for any events (INSERT, UPDATE, DELETE)
           schema: "public",
           table: "matches",
-          filter: `id=eq.${activeMatch.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         (payload) => {
           console.log("Realtime match update:", payload);
+          console.log("Event type:", payload.eventType);
           refreshData();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Match channel subscription status:", status, matchData.id);
+        if (status === "CHANNEL_ERROR") {
+          console.error("Match channel error detected.");
+        }
+      });
 
     // Listener for changes in the "game_stats" table for the current active match
     const gameChannel = supabase
@@ -255,7 +266,7 @@ export default function BasicScoreBoard() {
       gameChannel.unsubscribe();
     };
   
-  }, [activeMatch?.id]);
+  }, [activeMatch?.id, userId]);
 
 
   if (!branding) {

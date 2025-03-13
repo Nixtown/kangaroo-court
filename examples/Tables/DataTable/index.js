@@ -28,7 +28,7 @@ import { toast } from "react-toastify";
 import IconButton from "@mui/material/IconButton";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import AddIcon from "@mui/icons-material/Add";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
+import { useRouter } from "next/router";
 
 
 
@@ -36,6 +36,8 @@ import AddCircleIcon from "@mui/icons-material/AddCircle";
 function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -100,15 +102,39 @@ const handleActivate = async (matchId) => {
   // Optionally, refresh your state or redirect if necessary.
 };
 
+const formatDuration = (seconds) => {
+  if (seconds == null) return "N/A";
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  if (hrs > 0) {
+    // If hours exist, pad minutes and seconds to two digits
+    return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  } else {
+    // Otherwise, just display minutes and seconds
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+};
+
+
 
 
   // Define columns for your matches table.
   const columns = useMemo(
     () => [
       {
-        Header: "ID",
-        accessor: "id",
-        Cell: ({ value }) => <DataTableBodyCell>{value}</DataTableBodyCell>,
+        Header: "Overlay",
+        accessor: "active_match",
+        Cell: ({ row, value }) => (
+          <DataTableBodyCell
+            onClick={() => handleActivate(row.original.id)}
+            sx={{ cursor: "pointer" }}
+          >
+            <Icon sx={{ color: value ? "green" : "red" }}>
+              {value ? "visibility" : "visibility_off"}
+            </Icon>
+          </DataTableBodyCell>
+        ),
       },
       {
         Header: "Tournament",
@@ -131,34 +157,14 @@ const handleActivate = async (matchId) => {
         Cell: ({ value }) => <DataTableBodyCell>{value || "N/A"}</DataTableBodyCell>,
       },
       {
-        Header: "Overlay",
-        accessor: "active_match",
-        Cell: ({ row, value }) => (
-          <DataTableBodyCell
-            onClick={() => handleActivate(row.original.id)}
-            sx={{ cursor: "pointer" }}
-          >
-            <Icon sx={{ color: value ? "green" : "red" }}>
-              {value ? "visibility" : "visibility_off"}
-            </Icon>
-          </DataTableBodyCell>
-        ),
+        Header: "Duration",
+        accessor: "duration",
+        Cell: ({ value }) => <DataTableBodyCell>{formatDuration(value)}</DataTableBodyCell>,
       },
       {
         Header: "Status",
         accessor: "status",
         Cell: ({ value }) => <DataTableBodyCell>{value || "N/A"}</DataTableBodyCell>,
-      },
-      {
-        Header: "Actions",
-        accessor: "actions",
-        Cell: ({ row }) => (
-          <Link href={`/app/view-games/${row.original.id}`} passHref>
-            <MDButton variant="gradient" color="dark" size="small">
-              View Match
-            </MDButton>
-          </Link>
-        ),
       },
     ],
     []
@@ -176,7 +182,8 @@ const handleActivate = async (matchId) => {
             team_a_name: match.team_a_name,
             team_b_name: match.team_b_name,
             active_match: match.active_match,
-            status: match.status
+            status: match.status,
+            duration: match.duration
           }))
         : [],
     [matches]
@@ -192,33 +199,34 @@ const handleActivate = async (matchId) => {
     useSortBy,
     usePagination,
     useRowSelect,
-(hooks) => {
-  hooks.visibleColumns.push((cols) => [
-    {
-      id: "selection",
-      width: 100, // set a fixed width (adjust as needed)
-      Header: ({ getToggleAllRowsSelectedProps }) => (
-        <MDBox sx={{ width: 50, display: "flex", justifyContent: "center" }}>
-          <input
-            type="checkbox"
-            {...getToggleAllRowsSelectedProps()}
-           
-          />
-        </MDBox>
-      ),
-      Cell: ({ row }) => (
-        <MDBox sx={{ width: 50, display: "flex", justifyContent: "center" }}>
-          <input
-            type="checkbox"
-            {...row.getToggleRowSelectedProps()}
-            
-          />
-        </MDBox>
-      ),
-    },
-    ...cols,
-  ]);
-}
+    (hooks) => {
+      hooks.visibleColumns.push((cols) => [
+        {
+          id: "selection",
+          width: 100, // set a fixed width (adjust as needed)
+          Header: ({ getToggleAllRowsSelectedProps }) => (
+            <MDBox sx={{ width: 50, display: "flex", justifyContent: "center" }}>
+              <input
+                type="checkbox"
+                {...getToggleAllRowsSelectedProps()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </MDBox>
+          ),
+          Cell: ({ row }) => (
+            <MDBox sx={{ width: 50, display: "flex", justifyContent: "center" }}>
+              <input
+                type="checkbox"
+                {...row.getToggleRowSelectedProps()}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </MDBox>
+          ),
+        },
+        ...cols,
+      ]);
+    }
+    
 
   );
 
@@ -428,24 +436,32 @@ const handleMakeActive = async () => {
             ))}
           </MDBox>
           <TableBody {...getTableBodyProps()}>
-            {page.map((row, key) => {
-              prepareRow(row);
-              return (
-                <TableRow key={key} {...row.getRowProps()}>
-                  {row.cells.map((cell, cellKey) => (
-                    <DataTableBodyCell
-                      key={cellKey}
-                      noBorder={noEndBorder && tableRows.length - 1 === key}
-                      align={cell.column.align || "left"}
-                      {...cell.getCellProps()}
-                    >
-                      {cell.render("Cell")}
-                    </DataTableBodyCell>
-                  ))}
-                </TableRow>
-              );
-            })}
-          </TableBody>
+  {page.map((row, key) => {
+    prepareRow(row);
+    return (
+      <TableRow
+        key={key}
+        {...row.getRowProps({
+          onClick: () => router.push(`/app/view-games/${row.original.id}`),
+          style: { cursor: "pointer" },
+          sx: {
+            "&:hover": {
+              backgroundColor: "rgba(0, 0, 0, 0.05)", // adjust the color and opacity as needed
+            },
+          },
+        })}
+      >
+        {row.cells.map((cell, cellKey) => (
+          <DataTableBodyCell key={cellKey} {...cell.getCellProps()}>
+            {cell.render("Cell")}
+          </DataTableBodyCell>
+        ))}
+      </TableRow>
+    );
+  })}
+</TableBody>
+
+
         </Table>
         <MDBox
           display="flex"
