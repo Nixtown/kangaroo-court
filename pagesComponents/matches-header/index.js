@@ -21,9 +21,10 @@ import { toast } from "react-toastify";
 import defaultLogo from "/assets/images/logos/elare-square.png";
 import Link from "next/link";
 import MDButton from "/components/MDButton"; 
+import AddIcon from "@mui/icons-material/Add";
 
 
-function GamesHeader({ children }) {
+function MatchesHeader({ children }) {
   const [tabsOrientation, setTabsOrientation] = useState("horizontal");
   const [tabValue, setTabValue] = useState(0);
   const [matchData, setMatchData] = useState(null);
@@ -209,44 +210,19 @@ function GamesHeader({ children }) {
             <MDBox height="100%" mt={0.5} lineHeight={1}>
              
               <MDTypography variant="h4" color="dark" fontWeight="bold">
-                {matchData
-                  ? `${matchData.team_a_name} vs ${matchData.team_b_name}`
-                  : "Team A vs Team B"}
+                All Matches
               </MDTypography>
               <MDTypography variant="subtitle2" color="text"  sx={{ fontWeight: "regular" }}>
-                {matchData ? matchData.tournament_name : "Tournament Name"}
+                View and manage your current matches in real-time.
               </MDTypography>
-              <MDBox></MDBox>
-              <MDTypography variant="button" color="text" sx={{ fontWeight: "regular" }}>Status:{matchData
-                  ? ` ${matchData.status}`
-                  : "Not Started"}</MDTypography>
             </MDBox>
           </Grid>
           <Grid item sx={{ ml: "auto" }}>
-          <Link href={`/app/rally-controller/${match_id}`} passHref>
-              <MDButton variant="gradient" color="dark" sx={{ mr: 2 }}>
-                Rally Controller
-              </MDButton>
-            </Link>
-          <Link href={`/app/view-games/edit/${match_id}`} passHref>
-            <MDButton variant="outlined" color="dark" >
-              Edit Match
+          <Link href="/app/create-match" passHref>
+            <MDButton variant="outlined" color="dark" startIcon={<AddIcon />}>
+              Create Match
             </MDButton>
           </Link>
-            
-            <MDTypography ml={2} variant="button">
-              Overlay
-            </MDTypography>
-            <Switch
-              checked={matchData?.active_match || false}
-              onChange={(e) => {
-                // Only allow toggling on; if already active, do nothing.
-                if (e.target.checked && !matchData?.active_match) {
-                  handleMakeActive();
-                }
-              }}
-              disabled={matchData?.active_match} // disable switch when already active
-            />
           </Grid>
         </Grid>
         {children}
@@ -257,12 +233,12 @@ function GamesHeader({ children }) {
   );
 }
 
-GamesHeader.defaultProps = {
+MatchesHeader.defaultProps = {
   children: "",
 };
 
-GamesHeader.propTypes = {
+MatchesHeader.propTypes = {
   children: PropTypes.node,
 };
 
-export default GamesHeader;
+export default MatchesHeader;

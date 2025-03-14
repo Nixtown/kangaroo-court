@@ -285,13 +285,25 @@ const updateMatchBestOf = async (newCount) => {
     <MDBox>
       {/* Action buttons */}
       <MDBox display="flex" alignItems="center" p={3}>
-      <IconButton onClick={() => router.push("/app/matches")}>
-      <Icon>arrow_back</Icon>
-     
-    </IconButton>
-    <IconButton onClick={handleDeleteSelected} sx={{ ml: 2, color: "error.main" }}>
-  <DeleteForeverIcon />
-</IconButton>
+   
+          <MDBox 
+          sx={{ 
+            display: "flex", 
+            justifyContent: "space-between", 
+            alignItems: "center", 
+            width: "100%"  // Ensures full width for spacing
+          }}
+        >
+          {/* Back Button (Left) */}
+          <IconButton onClick={() => router.push("/app/matches")}>
+            <Icon>arrow_back</Icon>
+          </IconButton>
+
+          {/* Delete Button (Right) */}
+          <IconButton onClick={handleDeleteSelected} sx={{ color: "error.main" }}>
+            <DeleteForeverIcon />
+          </IconButton>
+        </MDBox>
 
         {entriesPerPage && (
           <MDBox display="flex" alignItems="center">

@@ -362,24 +362,14 @@ const handleMakeActive = async () => {
   return (
     <MDBox>
       {/* Action button for selected rows */}
+
   
 
       <TableContainer sx={{ boxShadow: "none" }}>
+        
         {(entriesPerPage || canSearch) && (
           
           <MDBox display="flex" justifyContent="space-between" alignItems="center" p={3}>
-               <MDBox mb={2}>
-               <Link href="/app/create-match" passHref>
-  <MDButton variant="gradient" color="dark" startIcon={<AddIcon />}>
-    New Match
-  </MDButton>
-</Link>
-          <IconButton onClick={handleDeleteSelected} sx={{ ml: 2, color: "error.main" }}>
-  <DeleteForeverIcon />
-</IconButton>
-      
-              </MDBox>
-
             {entriesPerPage && (
               <MDBox display="flex" alignItems="center">
                 <Autocomplete
@@ -393,25 +383,41 @@ const handleMakeActive = async () => {
                   sx={{ width: "5rem" }}
                   renderInput={(params) => <MDInput {...params} />}
                 />
+                
                 <MDTypography variant="caption" color="secondary">
                   &nbsp;&nbsp;entries per page
                 </MDTypography>
+                
               </MDBox>
               
             )}
             {canSearch && (
-              <MDBox width="12rem" ml="auto">
-                <MDInput
-                  placeholder="Search..."
-                  value={search}
-                  size="small"
-                  fullWidth
-                  onChange={({ currentTarget }) => {
-                    setSearch(currentTarget.value);
-                    onSearchChange(currentTarget.value);
-                  }}
-                />
-              </MDBox>
+            <MDBox 
+            sx={{ 
+              display: "flex", 
+              alignItems: "center", 
+              width: "12rem", 
+              ml: "auto" 
+            }}
+          >
+            {/* Search Input */}
+            <MDInput
+              placeholder="Search..."
+              value={search}
+              size="small"
+              fullWidth
+              onChange={({ currentTarget }) => {
+                setSearch(currentTarget.value);
+                onSearchChange(currentTarget.value);
+              }}
+            />
+          
+            {/* Delete Icon Button (Right) */}
+            <IconButton onClick={handleDeleteSelected} sx={{ ml: 1, color: "error.main" }}>
+              <DeleteForeverIcon />
+            </IconButton>
+          </MDBox>
+          
             )}
             
           </MDBox>

@@ -28,6 +28,7 @@ import DashboardLayout from "/examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 import Footer from "/examples/Footer";
 import DataTable from "/examples/Tables/DataTable";
+import MatchesHeader from "/pagesComponents/matches-header";
 
 
 
@@ -37,12 +38,13 @@ function OrderList() {
   return (
     <DashboardLayout>
       <DashboardNavbar />
+       <MatchesHeader />
       <MDBox my={3}>
         <MDBox
           display="flex"
           justifyContent="space-between"
           alignItems="flex-start"
-          mb={2}
+          mb={0}
         >
         </MDBox>
         <Card>

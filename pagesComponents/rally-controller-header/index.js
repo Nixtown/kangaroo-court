@@ -312,10 +312,13 @@ const handleMatchStatusChange = async () => {
                 : "Match Completed"}
             </MDButton>
             <Link href={`/app/view-games/${match_id}`} passHref>
-              <MDButton variant="gradient" color="dark">
+              <MDButton variant="outlined" color="dark">
                 View Match
               </MDButton>
             </Link>
+            <MDTypography ml={2} variant="button">
+              Overlay
+            </MDTypography>
             <Switch
               checked={matchData?.active_match || false}
               onChange={(e) => {
@@ -324,6 +327,7 @@ const handleMatchStatusChange = async () => {
                 }
               }}
               disabled={matchData?.active_match}
+             
             />
           </Grid>
         </Grid>
