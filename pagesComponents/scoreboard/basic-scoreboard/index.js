@@ -1,20 +1,15 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import MDBox from "/components/MDBox";
 import MDTypography from "/components/MDTypography";
 import { Grid } from "@mui/material";
 import BasicScoreNode from "../basic-score-node";
-import { supabase } from '/lib/supabaseClient';
-import { useRouter } from "next/router";
 
 
-export default function BasicScoreBoard() {
 
-  const router = useRouter();
-  const [branding, setBranding] = useState(null);
-  const [activeMatch, setActiveMatch] = useState(null);
-  const [activeGames, setActiveGames] = useState(null);
-  const [userId, setUserId] = useState(null)
+export default function BasicScoreBoard({branding, activeMatch, activeGames}) {
+
+
   const gamesData = activeGames ?? 
     [{  team_a_score: 0, 
         team_b_score: 0, 
@@ -76,197 +71,18 @@ export default function BasicScoreBoard() {
       return 0;
     })();
 
-    useEffect(() => {
-      const fetchActiveBranding = async () => {
-        const { data, error } = await supabase
-          .from("branding")
-          .select("*")
-          .eq("active_branding", true)
-          .limit(1)
-          .maybeSingle();
-        if (error) {
-          console.error("Error fetching active branding:", error);
-        } else {
-          setBranding(data);
-        }
-      };
   
-      fetchActiveBranding();
-    }, []);
   
   useEffect(() => {
     document.body.classList.add("obs-transparent");
-    loadActiveMatchAndGame();
 
     return () => {
       document.body.classList.remove("obs-transparent"); // Reset when leaving
     };
 
 
-  },  [router.isReady, router.query.token]);
-
-  const loadActiveMatchAndGame = async () => {
-    const match = await fetchActiveMatch();
-    if (match) {
-      setActiveMatch(match);
-      const game = await fetchGamesForMatch(match.id);
-      setActiveGames(game);
-    }
-  };
-
-
-  
-  const fetchActiveMatch = async () => {
-    // Wait until the router is ready
-    if (!router.isReady) return null;
-  
-    const { match_id, token } = router.query;
-    console.log(userId);
-  
-    if (match_id) {
-      // If match_id exists in the URL, fetch that match regardless of active status.
-      const { data, error } = await supabase
-        .from("matches")
-        .select("*")
-        .eq("id", match_id)
-        .maybeSingle();
-      if (error) {
-        console.error("Error fetching match by id:", error);
-        return null;
-      }
-      return data;
-    } else {
-      // If no match_id, then check for a token.
-      let userId;
-      if (token) {
-        // If a token is provided, look up the user by overlay_token.
-        const { data: userData, error: userError } = await supabase
-          .from("users")
-          .select("id")
-          .eq("overlay_token", token)
-          .maybeSingle();
-        if (userError || !userData) {
-          console.error("Error fetching user by overlay token:", userError);
-          return null;
-        }
-        userId = userData.id;
-        setUserId(userId);
-      } else {
-        // If no token, fall back to the currently logged-in user.
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError || !user) {
-          console.error("User not authenticated and no token provided:", authError);
-          return null;
-        }
-        userId = user.id;
-      }
-  
-      // Now, fetch the active match for that user.
-      const { data, error } = await supabase
-        .from("matches")
-        .select("*")
-        .eq("active_match", true)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (error) {
-        console.error("Error fetching active match:", error);
-        return null;
-      }
-      return data;
-    }
-  };
-  
-
-
-  const fetchGamesForMatch = async (matchId) => {
-    const { data, error } = await supabase
-      .from("game_stats")
-      .select("*")
-      .eq("match_id", matchId)
-      .order("game_number", { ascending: true }); // Order the games by game_number
-
-      if (error) {
-        console.error("Error fetching games for match:", error);
-        return []; // Return an empty array on error
-      }
-    
-      return data;
-  };
-
-  useEffect(() => {
-    const getUserId = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        console.error("Error fetching user:", error);
-        return;
-      }
-      setUserId(user.id);
-    };
-    getUserId();
   }, []);
 
-    //// Realtime Updates with Supabase v2 ////
-  useEffect(() => {
-    // Wait until activeMatch is available
-    if (!activeMatch?.id || !userId) return;
-
-
-    // Function to reload all data
-    const refreshData = () => {
-      loadActiveMatchAndGame();
-    };
-
-    console.log("Listeners are being setup again.")
-
-    // Listener for changes in the "matches" table for the current active match
-    const matchChannel = supabase
-      .channel("match_channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "*", // Listen for any events (INSERT, UPDATE, DELETE)
-          schema: "public",
-          table: "matches",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          console.log("Realtime match update:", payload);
-          console.log("Event type:", payload.eventType);
-          refreshData();
-        }
-      )
-      .subscribe((status) => {
-        console.log("Match channel subscription status:", status, matchData.id);
-        if (status === "CHANNEL_ERROR") {
-          console.error("Match channel error detected.");
-        }
-      });
-
-    // Listener for changes in the "game_stats" table for the current active match
-    const gameChannel = supabase
-      .channel("game_channel")
-      .on(
-        "postgres_changes",
-        {
-          event: "*", // Listen for any events (INSERT, UPDATE, DELETE)
-          schema: "public",
-          table: "game_stats",
-          filter: `match_id=eq.${activeMatch.id}`,
-        },
-        (payload) => {
-          // console.log("Realtime game update:", payload);
-          refreshData();
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions when activeMatch changes or component unmounts
-    return () => {
-      matchChannel.unsubscribe();
-      gameChannel.unsubscribe();
-    };
-  
-  }, [activeMatch?.id, userId]);
 
 
   if (!branding) {

@@ -583,7 +583,7 @@ useEffect(() => {
           <Grid container spacing={0} pb={3}>
             <Grid item xs={12} display="flex" justifyContent="center">
               <Grid item >
-              {!isSmallScreen &&<BasicScoreBoard/>}
+              {!isSmallScreen && <BasicScoreBoard branding={branding} activeMatch={matchData} activeGames={gameData} />}
               {isSmallScreen &&
               <MDBox>
               <MDTypography textAlign="center" variant="subtitle2">

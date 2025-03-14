@@ -46,9 +46,9 @@ const Scoreboards = () => {
     const getOverlayUrl = (overlayType) => {
         const baseUrl = window.location.origin;
         if (overlayType === "basic") {
-          return `${baseUrl}/scoreboards/basic?token=${overlayToken}`;
+          return `${baseUrl}/scoreboards/basic/${overlayToken}`;
         } else if (overlayType === "intermission") {
-          return `${baseUrl}/scoreboards/intermission?token=${overlayToken}`;
+          return `${baseUrl}/scoreboards/intermission/${overlayToken}`;
         }
         return "";
       };
