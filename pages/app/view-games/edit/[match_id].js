@@ -200,7 +200,7 @@ const EditMatch = () => {
     }
   
       // Redirect to match controller
-      router.push(`/app/view-games/${matchId}`);
+      router.push(`/app/rally-controller/${matchId}`);
     }
   };
   

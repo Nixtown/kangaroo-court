@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from '/lib/supabaseClient';
 import { useMediaQuery } from '@mui/material';
 import { toast } from "react-toastify";
-import { useRouter } from "next/router";
+
 
 
 
@@ -18,107 +18,12 @@ import MDTypography from "/components/MDTypography";
 import MDButton from "/components/MDButton";
 import ButtonGroup from '@mui/material/ButtonGroup';
 import MDInput from "/components/MDInput";
-import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
-import next from "next";
-
-const RallyControllerWConfig = ({setMatchData, matchData}) => {
-  const [branding, setBranding] = useState(null);
-  const [gameData, setGameData] = useState([]);
-  const isSmallScreen = useMediaQuery('(max-width:850px)');
-  const router = useRouter();
-  const { match_id } = router.query;
 
 
- 
-  useEffect(() => {
-    const fetchActiveBranding = async () => {
-      // Get the current authenticated user
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        console.error("User is not authenticated:", authError);
-        return;
-      }
-  
-      // Query the branding table for the active branding record for this user
-      const { data, error } = await supabase
-        .from("branding")
-        .select("*")
-        .eq("active_branding", true)
-        .eq("user_id", user.id)
-        .limit(1)
-        .maybeSingle();
-  
-      if (error) {
-        console.error("Error fetching active branding:", error);
-      } else {
-        setBranding(data);
-      }
-    };
-  
-    fetchActiveBranding();
-  }, []);
+const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData, branding}) => {
 
-// Fetch active match data, but only for the current logged-in user.
-useEffect(() => {
-  const fetchActiveMatch = async () => {
-    // Get the current authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error("User is not authenticated:", authError);
-      return;
-    }
-    const { data, error } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('id', match_id)
-      .eq('user_id', user.id) // Only load match for the current user
-      .single(); // Assuming there's only one active match per user
 
-    if (error || !data) {
-      console.error("No active match found or error fetching match:", error);
-      router.push("/app/create-match"); // Redirect if no active match is found
-      toast.error(
-        "Create a match before using rally controller.",
-        {
-          position: "top-center", // Positions the toast at the top center
-          autoClose: 3000,        // Auto-closes after 3 seconds
-          hideProgressBar: false, // Displays the progress bar
-          closeOnClick: true,     // Allows dismissal on click
-          pauseOnHover: true,     // Pauses autoClose timer when hovered
-          draggable: true,        // Enables dragging to dismiss
-          theme: "dark",       // Uses the "colored" theme for a vibrant look
-          style: { width: "100%", maxWidth: "500px" },
-        }
-      );
-    } else {
-      setMatchData(data);
-    }
-  };
 
-  if (router.isReady) {
-    fetchActiveMatch();
-  }
-}, [router]);
-
-  /// Get all the games using the active match id
-  useEffect(() => {
-    const fetchGameStats = async () => {
-      if (matchData && matchData.id) {
-        const { data, error } = await supabase
-          .from('game_stats')
-          .select('*')
-          .eq('match_id', matchData.id);
-          
-        if (error) {
-          console.error("Error fetching game stats:", error);
-        } else {
-          setGameData(data);
-        }
-      }
-    };
-  
-    fetchGameStats();
-  }, [matchData]);
 
   // Update the Games In SupaBase
   const updateGameDataInSupabase = async (updatedGameData) => {
@@ -152,9 +57,6 @@ useEffect(() => {
     updateGameDataInSupabase(updatedGame);
   };
   
-
-
-
 
   const handleChangeGame = async (delta) => {
     // Calculate the new game number
@@ -372,51 +274,6 @@ useEffect(() => {
     return game;
   }
 
-  const handleCycleServer = async () => {
-    // Validate that matchData and gameData exist and the index is valid.
-    if (!matchData || !gameData || gameData.length < matchData.current_game) {
-      console.error("Data not loaded or invalid");
-      return;
-    }
-    
-    // Determine the current game index (matchData.current_game is assumed to be 1-indexed)
-    const currentGameIndex = matchData.current_game - 1;
-    
-    // Clone the current game so we don't mutate state directly.
-    let updatedGame = { ...gameData[currentGameIndex] };
-    
-    // Cycle the server inline:
-    const previousServer = updatedGame.server;
-    let newServer;
-    if (updatedGame.scoring_type === "Rally") {
-      // For rally scoring, cycle between 1 and 2.
-      newServer = (previousServer % 2) + 1;
-    } else {
-      // For regular scoring, cycle through 1 to 4.
-      newServer = (previousServer % 4) + 1;
-    }
-    updatedGame.server = newServer;
-    
-    // Update the local gameData state.
-    const newGameData = [...gameData];
-    newGameData[currentGameIndex] = updatedGame;
-    setGameData(newGameData);
-    
-    // Update the game record in Supabase.
-    const { data, error } = await supabase
-      .from('game_stats')
-      .update(updatedGame)
-      .eq('id', updatedGame.id);
-      
-    if (error) {
-      console.error("Error updating game server:", error);
-    } else {
-      console.log("Game server updated successfully:", data);
-    }
-  };
-  
-  
-  
   function getServingTeam(game) {
     // For rally scoring, we assume only two valid server numbers: 1 and 2.
     if (game.scoring_type === 'Rally') {
@@ -572,7 +429,7 @@ useEffect(() => {
 
 
   // Render your component conditionally based on whether matchData or gameData is loaded
-  if (!matchData || gameData.length === 0 || !branding) {
+  if (!matchData || !gameData|| !branding) {
     return <div></div>;
   }
 
@@ -580,27 +437,6 @@ useEffect(() => {
     <MDBox>
       <Card id="incriment-games"sx={{ width: "100%"  } }>
       <MDBox p={3} >
-          <Grid container spacing={0} pb={3}>
-            <Grid item xs={12} display="flex" justifyContent="center">
-              <Grid item >
-              {!isSmallScreen && <BasicScoreBoard branding={branding} activeMatch={matchData} activeGames={gameData} />}
-              {isSmallScreen &&
-              <MDBox>
-              <MDTypography textAlign="center" variant="subtitle2">
-                {`${matchData.team_a_name} vs ${matchData.team_b_name}`}
-              </MDTypography>
-              <MDTypography textAlign="center" variant="h1">
-                {`${gameData[matchData.current_game - 1].team_a_score} - ${gameData[matchData.current_game - 1].team_b_score}`}
-              </MDTypography>
-              <MDTypography textAlign="center" variant="subtitle1">
-                {`Server: ${gameData[matchData.current_game - 1].server}`} 
-              </MDTypography>
-              </MDBox>
-              }
-
-              </Grid>
-            </Grid>
-          </Grid>
           <MDBox>
           {matchData.status === "Not Started" && (
             <div style={{
@@ -621,56 +457,12 @@ useEffect(() => {
                   Match Not Started
                 </MDTypography>
                 <MDTypography variant="body1" color="white" gutterBottom>
-                  Please click "Start Match" to begin logging scores.
+                  Please click "Start" to begin logging scores.
                 </MDTypography>
               
               </div>
             )}
-            <ButtonGroup variant="outlined" sx={{ height: "200px", width: "100%",  }} aria-label="Basic button group" >
-              <MDButton
-                      variant="contained"
-                      sx={{
-                        backgroundColor: branding.primary_color,
-                        '&:hover': {
-                          backgroundColor: branding.primary_color,
-                        },
-                        '&:active': {
-                          backgroundColor: branding.primary_color,
-                        },
-                        '&:focus': {
-                          backgroundColor: branding.primary_color,
-                          boxShadow: 'none !important',
-                        },
-                        '&:focus:not(:hover)': {
-                          backgroundColor: branding.primary_color,
-                          boxShadow: 'none !important',
-                        },
-                      }}
-                      
-                      
-                      
-                      color="dark"
-                      fullWidth
-                      size="large"
-                      disabled={gameData[matchData.current_game - 1].game_completed === true}
-                      onClick={() => handleRally(true)}
-                      >
-                        Won <br/>
-                        Rally
-              </MDButton>
-              <MDButton
-                      variant="gradient"
-                      color="dark"
-                      fullWidth
-                      size="large"
-                      disabled={gameData[matchData.current_game - 1].game_completed === true}
-                      onClick={() => handleRally(false)}
-                      >
-                        Lost<br/>
-                        Rally
-              </MDButton>
-            </ButtonGroup>
-            <Grid container spacing={3} pt={3}>
+              <Grid container spacing={3} pt={0} sx={{marginBottom: "12px"}}>
             <Grid item xs={12} sm={6}>
                 <MDInput
                 fullWidth
@@ -689,39 +481,92 @@ useEffect(() => {
                 inputProps={{ type: "number", autoComplete: "" }}
                 />
             </Grid>
-            <Grid item xs={12} lg={12}>
-                <MDButton
-                  variant="gradient"
-                  color="dark"
-                  fullWidth
-                  onClick={handleCycleServer}
-                  >
-                  Next Server
-                </MDButton>
-              </Grid>
-              <Grid item xs={6} lg={6}>
-                  <MDButton
-                    variant="gradient"
-                    color="dark"
-                    fullWidth
-                    disabled={matchData.current_game === 1}
-                    onClick={() => handleChangeGame(-1)}
-                    >
-                    Previous Game
-                  </MDButton>
-              </Grid>
-              <Grid item xs={6} lg={6}>
-                  <MDButton
-                    variant="gradient"
-                    color="dark"
-                    fullWidth
-                    disabled={matchData.current_game === matchData.best_of}
-                    onClick={() => handleChangeGame(+1)}
-                    >
-                    Next Game
-                  </MDButton>
-              </Grid>
-              </Grid>
+            </Grid>
+            
+            <Grid container justifyContent="center" alignItems="center" spacing={2} sx={{ width: "100%" }}>
+  
+  {/* Previous Game (Left Arrow) */}
+  <Grid item xs="auto">
+    <MDButton
+      sx={{ height: "125px", width: "50px", minWidth: "50px" }}
+      variant="gradient"
+      color="dark"
+      fullWidth
+      disabled={matchData.current_game === 1}
+      onClick={() => handleChangeGame(-1)}
+    >
+      ←
+    </MDButton>
+  </Grid>
+
+  {/* Won Rally & Lost Rally (Expands to Fill Space) */}
+  <Grid item xs>
+    <ButtonGroup variant="outlined" sx={{ height: "125px", width: "100%" }} aria-label="Basic button group">
+      {/* Won Rally */}
+      <MDButton
+        variant="contained"
+        sx={{
+          backgroundColor: branding.primary_color,
+          '&:hover': { backgroundColor: branding.primary_color },
+          '&:active': { backgroundColor: branding.primary_color },
+          '&:focus': { backgroundColor: branding.primary_color, boxShadow: 'none !important' },
+          '&:focus:not(:hover)': { backgroundColor: branding.primary_color, boxShadow: 'none !important' },
+        }}
+        color="dark"
+        fullWidth
+        size="large"
+        disabled={
+          gameData[matchData.current_game - 1] 
+            ? gameData[matchData.current_game - 1].game_completed === true 
+            : true
+        }
+        onClick={() => handleRally(true)}
+      >
+        Won <br/> Rally
+      </MDButton>
+
+      {/* Lost Rally */}
+      <MDButton
+        variant="gradient"
+        color="dark"
+        fullWidth
+        size="large"
+        disabled={
+          gameData[matchData.current_game - 1] 
+            ? gameData[matchData.current_game - 1].game_completed === true 
+            : true
+        }
+        onClick={() => handleRally(false)}
+      >
+        Lost <br/> Rally
+      </MDButton>
+    </ButtonGroup>
+  </Grid>
+
+  {/* Next Game (Right Arrow) */}
+  <Grid item xs="auto">
+    <MDButton
+      sx={{ height: "125px", width: "50px", minWidth: "50px" }}
+      variant="gradient"
+      color="dark"
+      fullWidth
+      disabled={matchData.current_game === matchData.best_of}
+      onClick={() => handleChangeGame(+1)}
+    >
+      →
+    </MDButton>
+  </Grid>
+
+</Grid>
+
+
+
+
+
+
+
+
+
           </MDBox>          
         </MDBox> 
       </Card>                                                          

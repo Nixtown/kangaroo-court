@@ -29,54 +29,10 @@ import IconButton from "@mui/material/IconButton";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 
 
-function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
+function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder, setMatchData, matchData, gameData }) {
   const router = useRouter();
-  const { match_id } = router.query;
-  const [games, setGames] = useState([]);
-  const [matchData, setMatchData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const isActive = matchData && matchData.active_match;
+  const games = gameData
 
-  // Fetch the game records
-  useEffect(() => {
-    if (!match_id) return; // Wait for match_id to be available
-    const fetchGames = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("game_stats")
-        .select("*")
-        .eq("match_id", match_id)
-        .order("game_number", { ascending: true });
-      if (error) {
-        console.error("Error fetching games:", error);
-      } else {
-        setGames(data || []);
-      }
-      setLoading(false);
-    };
-
-    fetchGames();
-  }, [match_id]);
-
-  // Fetch match details to get team names
-  useEffect(() => {
-    if (!match_id) return;
-    const fetchMatchData = async () => {
-      const { data, error } = await supabase
-        .from("matches")
-        .select("team_a_name, team_b_name")
-        .eq("id", match_id)
-        .single();
-      if (error) {
-        console.error("Error fetching match data:", error);
-      } else {
-        setMatchData(data);
-      }
-    };
-    fetchMatchData();
-  }, [match_id]);
-
-  
 
   // Define columns for the games table.
   const columns = useMemo(() => [
@@ -232,51 +188,51 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
     entriesEnd = tableRows.length;
   }
 
-  if (loading) {
-    return (
-      <MDBox p={3}>
-        <MDTypography>Loading games...</MDTypography>
-      </MDBox>
-    );
-  }
-
-
-
 // Delete handler for selected games
 const handleDeleteSelected = async () => {
   // Extract the selected rows’ original game data.
   const selectedGames = selectedFlatRows.map((row) => row.original);
   const idsToDelete = selectedGames.map((game) => game.id);
+  const amountDeleted = idsToDelete.length;
+
+  if (!matchData || !matchData.id) {
+    console.error("No match selected to update.");
+    toast.error("Error: No active match.");
+    return;
+  }
 
   // Delete from Supabase "game_stats" table.
   const { error } = await supabase.from("game_stats").delete().in("id", idsToDelete);
+  
   if (error) {
     console.error("Error deleting games:", error);
     toast.error("Error deleting selected games.");
-  } else {
-    // Update the state to remove the deleted games.
-    setGames((prev) => {
-      const updatedGames = prev.filter((game) => !idsToDelete.includes(game.id));
-      // Update the match's best_of field to reflect the new number of games.
-      updateMatchBestOf(updatedGames.length);
-      return updatedGames;
-    });
-    toast.success("Selected games deleted successfully.");
+    return;
   }
-};
 
-// Function to update the match record's best_of field.
-const updateMatchBestOf = async (newCount) => {
-  const { match_id } = router.query;
-  if (!match_id) return;
-  const { error } = await supabase
+  // Calculate the new `best_of`
+  const newBestOf = Math.max(1, matchData.best_of - amountDeleted);
+
+  // Update matchData state
+  setMatchData((prevMatchData) => ({
+    ...prevMatchData,
+    best_of: newBestOf,
+    current_game: 1, // Reset current game
+  }));
+
+  // 🔥 Update the match in Supabase
+  const { error: updateError } = await supabase
     .from("matches")
-    .update({ best_of: newCount })
-    .eq("id", match_id);
-  if (error) {
-    console.error("Error updating match best_of:", error);
-    toast.error("Error updating match game count.");
+    .update({ best_of: newBestOf, current_game: 1 })
+    .eq("id", matchData.id);
+
+  if (updateError) {
+    console.error("Error updating match:", updateError);
+    toast.error("Error updating match in database.");
+    return;
   }
+
+  toast.success("Selected games deleted and match updated successfully.");
 };
 
 

@@ -33,7 +33,7 @@ import { useRouter } from "next/router";
 
 
 
-function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder }) {
+function DataTable({ entriesPerPage, canSearch, showTotalEntries, pagination, isSorted, noEndBorder, setMatchData }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -258,22 +258,23 @@ const formatDuration = (seconds) => {
 
   useEffect(() => setPageSize(defaultValue), [defaultValue, setPageSize]);
 
-  // Delete handler for selected rows
-  const handleDeleteSelected = async () => {
-    // Extract the selected rows’ original data.
-    const selectedMatches = selectedFlatRows.map((row) => row.original);
-    const idsToDelete = selectedMatches.map((match) => match.id);
+ // Delete handler for selected rows
+const handleDeleteSelected = async () => {
+  // Extract the selected rows’ original data.
+  const selectedMatches = selectedFlatRows.map((row) => row.original);
+  const idsToDelete = selectedMatches.map((match) => match.id);
 
+  // Delete from Supabase.
+  const { error } = await supabase.from("matches").delete().in("id", idsToDelete);
+  if (error) {
+    console.error("Error deleting matches:", error);
+  } else {
+    // Remove deleted matches from state.
+    setMatches((prev) => prev.filter((match) => !idsToDelete.includes(match.id)));
+  }
+};
 
-    // Delete from Supabase.
-    const { error } = await supabase.from("matches").delete().in("id", idsToDelete);
-    if (error) {
-      console.error("Error deleting matches:", error);
-    } else {
-      // Remove deleted matches from state.
-      setMatches((prev) => prev.filter((match) => !idsToDelete.includes(match.id)));
-    }
-  };
+  
 
   // Make Active handler for selected row
 const handleMakeActive = async () => {
@@ -448,7 +449,7 @@ const handleMakeActive = async () => {
       <TableRow
         key={key}
         {...row.getRowProps({
-          onClick: () => router.push(`/app/view-games/${row.original.id}`),
+          onClick: () => router.push(`/app/rally-controller/${row.original.id}`),
           style: { cursor: "pointer" },
           sx: {
             "&:hover": {
