@@ -452,6 +452,7 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
               justifyContent: "center",
               borderRadius: "0.75rem",
               zIndex: 1000,
+              textAlign: "center"
             }}>
                 <MDTypography variant="h5" color="white" gutterBottom>
                   Match Not Started

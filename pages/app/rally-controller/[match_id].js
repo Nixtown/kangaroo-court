@@ -57,6 +57,8 @@ const RallyControllerDash = () => {
   const { match_id } = router.query;
   const isSmallScreen = useMediaQuery('(max-width:850px)');
 
+  const currentGame = gameData?.[matchData?.current_game - 1] || {}; // Ensures currentGame is always an object
+
 
 
   useEffect(() => {
@@ -170,11 +172,13 @@ useEffect(() => {
                 {`${matchData.team_a_name} vs ${matchData.team_b_name}`}
               </MDTypography>
               <MDTypography textAlign="center" variant="h1">
-                {`${gameData[matchData.current_game - 1].team_a_score} - ${gameData[matchData.current_game - 1].team_b_score}`}
-              </MDTypography>
-              <MDTypography textAlign="center" variant="subtitle1">
-                {`Server: ${gameData[matchData.current_game - 1].server}`} 
-              </MDTypography>
+              {currentGame.team_a_score !== undefined && currentGame.team_b_score !== undefined
+                ? `${currentGame.team_a_score} - ${currentGame.team_b_score}`
+                : "Loading..."}
+            </MDTypography>
+            <MDTypography textAlign="center" variant="subtitle1">
+              {currentGame.server !== undefined ? `Server: ${currentGame.server}` : ""}
+            </MDTypography>
               </MDBox>
               }
 
