@@ -9,7 +9,7 @@ Coded by www.creative-tim.com
 * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef  } from "react";
 import { supabase } from '/lib/supabaseClient';
 
 // NextJS Material Dashboard 2 PRO components
@@ -55,53 +55,73 @@ const RallyControllerDash = () => {
 
   const [showLeavePopup, setShowLeavePopup] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [allowNavigation, setAllowNavigation] = useState(false);
   const [gameData, setGameData] = useState();
   const [branding, setBranding] = useState(null);
   const router = useRouter();
   const { match_id } = router.query;
   const isSmallScreen = useMediaQuery('(max-width:850px)');
+  const routeChangeHandlerRef = useRef();
 
   const currentGame = gameData?.[matchData?.current_game - 1] || {}; // Ensures currentGame is always an object
 
 
-
-    // ✅ Detect external navigation (refresh, close tab, new URL)
-    useEffect(() => {
-      const handleBeforeUnload = (event) => {
-        if (matchData?.status === "In Progress") {
-          event.preventDefault();
-          event.returnValue = "You have an ongoing match. Are you sure you want to leave?";
-        }
-      };
-  
-      window.addEventListener("beforeunload", handleBeforeUnload);
-      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-    }, [matchData]);
-  
-    // ✅ Prevent internal navigation (Only for Next.js Page Changes)
-    useEffect(() => {
-      const handleRouteChange = (url, { shallow }) => {
-        if (matchData?.status === "In Progress" && !shallow) {
-          setPendingNavigation(url);
-          setShowLeavePopup(true);
-          router.events.emit("routeChangeError"); // Stop Next.js from navigating
-          throw "Prevented route change"; // Prevent Next.js error
-        }
-      };
-  
-      router.events.on("routeChangeStart", handleRouteChange);
-      return () => {
-        router.events.off("routeChangeStart", handleRouteChange);
-      };
-    }, [matchData, router]);
-  
-    const confirmLeave = () => {
-      if (pendingNavigation) {
-        router.replace(pendingNavigation); // ✅ Allow navigation after confirmation
+  useEffect(() => {
+    const handleRouteChange = (url, { shallow }) => {
+      console.log("Route change attempted to:", url, "shallow:", shallow);
+      if (matchData?.status === "In Progress" && !shallow) {
+        console.log("Navigation blocked: match is in progress.");
+        setPendingNavigation(url);
+        setShowLeavePopup(true);
+        // Block navigation by emitting an error and throwing a custom message.
+        router.events.emit("routeChangeError");
+        throw "Prevent route change";
+      } else {
+        console.log("Navigation allowed.");
       }
     };
 
+    // Store handler in the ref so we can reference it later.
+    routeChangeHandlerRef.current = handleRouteChange;
+    router.events.on("routeChangeStart", handleRouteChange);
+    return () => {
+      router.events.off("routeChangeStart", routeChangeHandlerRef.current);
+    };
+  }, [matchData, router]);
 
+  // Confirm leave: remove the handler and navigate
+  const confirmLeave = () => {
+    if (pendingNavigation) {
+      console.log("Confirming leave. Pending navigation to:", pendingNavigation);
+      setShowLeavePopup(false);
+      const target = pendingNavigation;
+      setPendingNavigation(null);
+      // Remove the route-change handler so that our navigation is not blocked.
+      router.events.off("routeChangeStart", routeChangeHandlerRef.current);
+      router.push(target)
+        .then(() => {
+          console.log("Navigation to", target, "was successful.");
+        })
+        .catch((err) => {
+          if (err !== "Prevent route change") {
+            console.error("Error during navigation:", err);
+          } else {
+            console.log("Navigation prevented (expected error).");
+          }
+        });
+    } else {
+      console.log("No pending navigation URL found.");
+    }
+  };
+  
+  const cancelLeave = () => {
+    setShowLeavePopup(false);
+    setPendingNavigation(null);
+  };
+
+
+
+ 
   useEffect(() => {
     console.log("MatchData updated:", matchData);
   }, [matchData]); // Re-run effect when matchData changes
@@ -267,19 +287,24 @@ useEffect(() => {
         <GamesTable entriesPerPage={false} setMatchData={setMatchData} matchData={matchData} gameData={gameData}/>
       </Card>
 
-  {/* MUI Popup for Internal Navigation Confirmation */}
-  <Dialog open={showLeavePopup} onClose={() => setShowLeavePopup(false)}>
-        <DialogTitle>Leave Ongoing Match?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-          This match is in progress. The match timer will continue to run until you mark this match as complete. 
-    Are you sure you want to leave? </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <MDButton onClick={() => setShowLeavePopup(false)} color="dark" variant="outlined">Stay</MDButton>
-          <MDButton onClick={confirmLeave} color="error" variant="contained">Leave</MDButton>
-        </DialogActions>
-      </Dialog>
+   {/* MUI Popup for Internal Navigation Confirmation */}
+   <Dialog open={showLeavePopup} onClose={cancelLeave}>
+          <DialogTitle>Leave Ongoing Match?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This match is in progress. The match timer will continue to run until you mark this match as complete.
+              Are you sure you want to leave?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <MDButton onClick={cancelLeave} color="dark" variant="outlined">
+              Stay
+            </MDButton>
+            <MDButton onClick={confirmLeave} color="error" variant="contained">
+              Leave
+            </MDButton>
+          </DialogActions>
+        </Dialog>
       </MDBox>
     </DashboardLayout>
 
