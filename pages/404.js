@@ -14,7 +14,7 @@ import Router from "next/router";
 
 export default function Custom404() {
   useEffect(() => {
-    Router.push("/app/rally-controller");
+    Router.push("/app/matches");
   });
 
   return <div />;

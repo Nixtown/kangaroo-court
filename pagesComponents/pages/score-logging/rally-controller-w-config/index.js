@@ -85,6 +85,7 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
   
   const handleRally = (rallyWon) => {
     // Determine the current game index from matchData (assuming current_game is 1-indexed)
+
     const currentGameIndex = matchData.current_game - 1;
     
     // Get the current game object
@@ -116,10 +117,31 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
     let currentGame = { ...gameData[currentGameIndex] };
 
 
+  
+
+ 
+    const prevSideOutCount = currentGame.side_out_count;
+    // Check if a side-out occurred
+
     // Step 5: Perform server rotation logic
     if (rallyWinner !== servingTeam) {
+
       currentGame = getNextServerInRotation(currentGame);
+ 
     }
+
+ 
+   const sideOutOccurred = currentGame.side_out_count > prevSideOutCount;
+
+    
+    const prevIsGamePoint = isGamePoint(currentGame,  getServingTeam(currentGame)) && !sideOutOccurred;
+
+    console.log("Side Out Counts:", prevSideOutCount, currentGame.side_out_count)
+    console.log("Was it previously game point?", prevIsGamePoint);
+
+
+
+
 
 
     // Step 3: Check win_on_serve rule before awarding a point.
@@ -138,24 +160,18 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
       } else if (currentGame.scoring_type === 'Regular') {
         currentGame = handleRegularScoring(currentGame, rallyWinner, servingTeam);
            // Check if it's game point and update them.
-      
      
       }
     }
 
-      // Step 6: Check overall win conditions (e.g., reaching target score with required win margin)
+    // Step 6: Check overall win conditions (e.g., reaching target score with required win margin)
       currentGame = checkWinConditions(currentGame);
 
 
-    // If the score is now tied it can never be game point.
-    if(currentGame.team_a_score === currentGame.team_b_score || currentGame.game_completed)
-    {
-      currentGame.is_game_point = false
-    }
-    else
-    {
-        // Capture whether it is game point before it's changed 
-    const prevIsGamePoint = currentGame.is_game_point;
+
+   
+
+        
 
     // We set game point toggle which controls the UI on the score board but doesn't issue points
      if (currentGame.scoring_type === "Rally" && !currentGame.win_on_serve) {
@@ -164,17 +180,20 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
          isGamePoint(currentGame, "TeamA") || isGamePoint(currentGame, "TeamB");
      } else {
        // Otherwise, check if the serving team is at game point.
+       console.log("Running Gamepoint Check")
        currentGame.is_game_point = isGamePoint(currentGame, getServingTeam(currentGame));
      }
  
      // If is_game_point changed from false to true, run the updateGamePoints function
      if (!prevIsGamePoint && currentGame.is_game_point) {
        // Optionally, you can pass in the serving team as well
-       
-       currentGame = updateGamePoints(currentGame);
+       console.log("Updating Game Points")
+       currentGame = updateGamePoints(currentGame, getServingTeam(currentGame));
      }
+
      
-    }
+     
+
       
 
   
@@ -325,6 +344,7 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
   // isGamePoint: Returns true if the specified team is one point away from the target score.
   function isGamePoint(game, team) {
     const target = getTargetScoreForTeam(game, team);
+    console.log("Target Score", target)
     
     let teamScore;
     if (team === "TeamA") {
@@ -380,53 +400,19 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
     return game;
   }
 
-  // function updateGamePoints(game, servingTeam) {
-  //   if (game.scoring_type === 'Rally') {
-  //     // For rally scoring, award a game point regardless of rally outcome.
-  //     // Check if TeamA is at game point.
 
-  //     console.log("Is game point updatable?", game.is_game_point_updatable)
-  //     if (game.is_game_point_updatable && isGamePoint(game, "TeamA")) {
-  //       game.team_a_game_points = (game.team_a_game_points || 0) + 1;
-  //       game.is_game_point_updatable = false;
-  //       console.log("New Game Point Team A: ", game.team_a_game_points);
-  //     }
-  //     // Check if TeamB is at game point.
-  //     else if (game.is_game_point_updatable && isGamePoint(game, "TeamB")) {
-  //       game.team_b_game_points = (game.team_b_game_points || 0) + 1;
-  //       game.is_game_point_updatable = false;
-  //       console.log("New Game Point Team B: ", game.team_b_game_points);
-  //     }
-  //   } else {
-  //     // For regular scoring, only award a game point if the serving team is at game point.
-  //     if (game.is_game_point_updatable && isGamePoint(game, servingTeam)) {
-  //       if (servingTeam === "TeamA") {
-  //         game.team_a_game_points = (game.team_a_game_points || 0) + 1;
-  //         console.log("New Game Point Team A: ", game.team_a_game_points);
-  //       } else if (servingTeam === "TeamB") {
-  //         game.team_b_game_points = (game.team_b_game_points || 0) + 1;
-  //         console.log("New Game Point Team B: ", game.team_b_game_points);
-  //       }
-  //       game.is_game_point_updatable = false;
-  //     }
-  //   }
-    
-  //   return game;
-  // }
-
-  function updateGamePoints(game) {
- 
-    if (game.team_a_score > game.team_b_score) {
+  function updateGamePoints(game, servingTeam) {
+    if (servingTeam === "TeamA") {
       game.team_a_game_points = (game.team_a_game_points || 0) + 1;
-      console.log("Awarded game point to Team A");
-    } else if (game.team_b_score > game.team_a_score) {
+      console.log("Awarded game point to Team A", game.team_a_game_points );
+    } else if (servingTeam === "TeamB") {
       game.team_b_game_points = (game.team_b_game_points || 0) + 1;
-      console.log("Awarded game point to Team B");
+      console.log("Awarded game point to Team B",game.team_b_game_points );
     }
   
     return game;
   }
-
+  
 
   // Render your component conditionally based on whether matchData or gameData is loaded
   if (!matchData || !gameData|| !branding) {

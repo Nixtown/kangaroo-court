@@ -42,34 +42,48 @@ export default function BasicScoreBoard({branding, activeMatch, activeGames}) {
       is_game_point: false              // if you are tracking side-outs
     };
     
-    const currentGame =
-      activeMatch &&
-      gamesData &&
-      gamesData.length >= activeMatch.current_game
+    const currentGame = 
+    activeMatch && gamesData && gamesData.length >= activeMatch.current_game
         ? gamesData[activeMatch.current_game - 1]
         : defaultGame;
 
-    const currentGamePoints = (() => {
-      if (currentGame.scoring_type === "Rally") {
-        // Compare the team scores to decide which team's game points to show.
-        if (currentGame.team_a_score > currentGame.team_b_score) {
-          return currentGame.team_a_game_points || 0;
-        } else if (currentGame.team_b_score > currentGame.team_a_score) {
-          return currentGame.team_b_game_points || 0;
-        } else {
-          // If scores are tied, you might choose one or return a default.
-          return currentGame.team_a_game_points || 0;
-        }
-      } else {
-        // For Regular scoring, use the server to determine which team's game points to show.
-        if (currentGame.server === 1 || currentGame.server === 2) {
-          return currentGame.team_a_game_points || 0;
-        } else if (currentGame.server === 3 || currentGame.server === 4) {
-          return currentGame.team_b_game_points || 0;
-        }
-      }
-      return 0;
-    })();
+        const getCurrentGamePoints = (currentGame) => {
+          let result = "";
+      
+          if (currentGame.scoring_type === "Rally") {
+              if (currentGame.win_on_serve) {
+                  // ✅ In rally scoring, server 1 = Team A, server 2 = Team B
+                  const servingTeam = currentGame.server === 1 ? "Team A" : "Team B";
+      
+                  result = servingTeam === "Team A"
+                      ? `${currentGame.team_a_game_points || 0}`
+                      : `${currentGame.team_b_game_points || 0}`;
+              } else {
+                  // ✅ Handle Double Game Point (Both teams at 24 in win-by-2)
+                  if (currentGame.team_a_score === currentGame.team_b_score && 
+                      currentGame.team_a_score >= currentGame.first_to_points - 1) {
+                      result = `${currentGame.team_a_game_points || 0} & ${currentGame.team_b_game_points || 0}`;
+                  } else if (currentGame.team_a_score > currentGame.team_b_score) {
+                      result = `${currentGame.team_a_game_points || 0}`;
+                  } else {
+                      result = `${currentGame.team_b_game_points || 0}`;
+                  }
+              }
+          } else {
+              // ✅ Regular Scoring: Determine team serving normally
+              const servingTeam = currentGame.server === 1 || currentGame.server === 2 ? "Team A" : "Team B";
+      
+              result = servingTeam === "Team A"
+                  ? `${currentGame.team_a_game_points || 0}`
+                  : `${currentGame.team_b_game_points || 0}`;
+          }
+      
+          return result;
+      };
+      
+
+      
+
 
   
   
@@ -117,26 +131,32 @@ export default function BasicScoreBoard({branding, activeMatch, activeGames}) {
             </MDBox>
             
             <Grid container  sx={{
-                display: "inline-flex", // Shrinks to fit the content
-                width: "max-content", // Ensures it only takes the space needed
+                display: "flex", // Shrinks to fit the content
+                minWidth: "fit-content", // Ensures it only takes the space needed
                 margin: "0 auto", // Centers the container if needed
                 bgcolor: "transparent",
+                overflow: "hidden",
+                flexWrap: "nowrap",
                 borderRadius: "6px",
     
               }} >
 
               {/* -----------------  LOGO  ---------------- */}
               <Grid item  
-                  sx={{bgcolor: branding.primary_color,
-                  display: "flex", 
-                  alignItems: "center",
-                  borderRadius: "6px 0 0 6px",
-                  padding: "0 18px"
-              }}>
+                   sx={{
+                    bgcolor: branding.primary_color,
+                    display: "flex", 
+                    alignItems: "center",
+                    borderRadius: "6px 0 0 6px",
+                    padding: "0 18px",
+                    justifyContent: "center" // ✅ Ensures logo stays centered
+                  }}
+                  
+                  >
                 <MDBox
                   component="img"
                   src={branding.logo_url}
-                  sx={{ width: "100%", height: "50px"}}
+                  sx={{ maxwidth: "100%", height: "50px", objectFit: "contain",}}
                 >
                 </MDBox>
               </Grid>
@@ -173,7 +193,7 @@ export default function BasicScoreBoard({branding, activeMatch, activeGames}) {
                               width: 12,
                               height: 12,
                               borderRadius: "50%",
-                              backgroundColor: branding.primary_color,
+                              backgroundColor: "#03b403",
                               display: currentServer === 1 ? "default" : "none",
                             }}
                           />
@@ -334,7 +354,7 @@ export default function BasicScoreBoard({branding, activeMatch, activeGames}) {
                           fontSize: "16px",
                           color: "#ffffff" }}>
                          {
-                          `GAME POINT: ${currentGamePoints}`
+                          `GAME POINT: ${getCurrentGamePoints(currentGame)}`
                          }
                 </MDTypography>
             </MDBox>

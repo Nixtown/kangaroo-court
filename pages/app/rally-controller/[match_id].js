@@ -24,6 +24,9 @@ import { useMediaQuery } from '@mui/material';
 import MDTypography from "/components/MDTypography";
 import Card from "@mui/material/Card";
 import MDButton from "/components/MDButton";
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from "@mui/material";
+import Link from "next/link";
+
 
 
 
@@ -50,7 +53,8 @@ const RallyControllerDash = () => {
     match_title: "Open Play"
   });
 
-
+  const [showLeavePopup, setShowLeavePopup] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
   const [gameData, setGameData] = useState();
   const [branding, setBranding] = useState(null);
   const router = useRouter();
@@ -59,6 +63,43 @@ const RallyControllerDash = () => {
 
   const currentGame = gameData?.[matchData?.current_game - 1] || {}; // Ensures currentGame is always an object
 
+
+
+    // ✅ Detect external navigation (refresh, close tab, new URL)
+    useEffect(() => {
+      const handleBeforeUnload = (event) => {
+        if (matchData?.status === "In Progress") {
+          event.preventDefault();
+          event.returnValue = "You have an ongoing match. Are you sure you want to leave?";
+        }
+      };
+  
+      window.addEventListener("beforeunload", handleBeforeUnload);
+      return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [matchData]);
+  
+    // ✅ Prevent internal navigation (Only for Next.js Page Changes)
+    useEffect(() => {
+      const handleRouteChange = (url, { shallow }) => {
+        if (matchData?.status === "In Progress" && !shallow) {
+          setPendingNavigation(url);
+          setShowLeavePopup(true);
+          router.events.emit("routeChangeError"); // Stop Next.js from navigating
+          throw "Prevented route change"; // Prevent Next.js error
+        }
+      };
+  
+      router.events.on("routeChangeStart", handleRouteChange);
+      return () => {
+        router.events.off("routeChangeStart", handleRouteChange);
+      };
+    }, [matchData, router]);
+  
+    const confirmLeave = () => {
+      if (pendingNavigation) {
+        router.replace(pendingNavigation); // ✅ Allow navigation after confirmation
+      }
+    };
 
 
   useEffect(() => {
@@ -219,20 +260,26 @@ useEffect(() => {
               setMatchData={setMatchData}
               matchData={matchData}
             />
-            </MDBox>
-            
-           
+            </MDBox>         
           </Grid> 
-         
-    
-      
-                  
-          
-      
         </Grid>
         <Card sx={{marginTop: "24px"}}> 
         <GamesTable entriesPerPage={false} setMatchData={setMatchData} matchData={matchData} gameData={gameData}/>
       </Card>
+
+  {/* MUI Popup for Internal Navigation Confirmation */}
+  <Dialog open={showLeavePopup} onClose={() => setShowLeavePopup(false)}>
+        <DialogTitle>Leave Ongoing Match?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+          This match is in progress. The match timer will continue to run until you mark this match as complete. 
+    Are you sure you want to leave? </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <MDButton onClick={() => setShowLeavePopup(false)} color="dark" variant="outlined">Stay</MDButton>
+          <MDButton onClick={confirmLeave} color="error" variant="contained">Leave</MDButton>
+        </DialogActions>
+      </Dialog>
       </MDBox>
     </DashboardLayout>
 
