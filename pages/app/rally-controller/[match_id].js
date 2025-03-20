@@ -68,6 +68,12 @@ const RallyControllerDash = () => {
   const isSmallScreen = useMediaQuery('(max-width:850px)');
   const routeChangeHandlerRef = useRef();
 
+  const currentGame =
+  gameData && Array.isArray(gameData)
+    ? gameData.find((game) => game.game_number === matchData.current_game)
+    : {};
+
+
 
 
   useEffect(() => {
@@ -322,28 +328,37 @@ useEffect(() => {
       <MDBox>
         <Grid container rowSpacing={3} columnSpacing={3}>
           <Grid item xs={12} lg={8} >
-            <Card id="incriment-games"sx={{ width: "100%", marginBottom: "24px" } }>
-            <Grid sx={{marginTop: "24px", marginBottom: "24px"}}item display="flex" flexDirection="column" justifyContent="center" alignItems="center" >
-              {!isSmallScreen && <BasicScoreBoard branding={branding} activeMatch={matchData} activeGames={gameData} />}
-              {isSmallScreen &&
-              <MDBox>
-              <MDTypography textAlign="center" variant="subtitle2">
-                {`${matchData.team_a_name} vs ${matchData.team_b_name}`}
-              </MDTypography>
-              <MDTypography textAlign="center" variant="h1">
-              {currentGame.team_a_score !== undefined && currentGame.team_b_score !== undefined
-                ? `${currentGame.team_a_score} - ${currentGame.team_b_score}`
-                : "Loading..."}
-            </MDTypography>
-            <MDTypography textAlign="center" variant="subtitle1">
-              {currentGame.server !== undefined ? `Server: ${currentGame.server}` : ""}
-            </MDTypography>
-              </MDBox>
-              }
-
+          <Card id="incriment-games" sx={{ width: "100%", marginBottom: "24px" }}>
+            <Grid
+              item
+              sx={{ marginTop: "24px", marginBottom: "24px" }}
+              display="flex"
+              flexDirection="column"
+              justifyContent="center"
+              alignItems="center"
+            >
+              {!isSmallScreen ? (
+                <BasicScoreBoard branding={branding} activeMatch={matchData} activeGames={gameData} />
+              ) : (
+                <MDBox>
+                  <MDTypography textAlign="center" variant="subtitle2">
+                    {`${matchData.team_a_name} vs ${matchData.team_b_name}`}
+                  </MDTypography>
+                  <MDTypography textAlign="center" variant="h1">
+                    {currentGame &&
+                    currentGame.team_a_score !== undefined &&
+                    currentGame.team_b_score !== undefined
+                      ? `${currentGame.team_a_score} - ${currentGame.team_b_score}`
+                      : "Loading..."}
+                  </MDTypography>
+                  <MDTypography textAlign="center" variant="subtitle1">
+                    {currentGame && currentGame.server !== undefined ? `Server: ${currentGame.server}` : ""}
+                  </MDTypography>
+                </MDBox>
+              )}
             </Grid>
           </Card>
-            
+
             
             {/* <RallyControllerHeader matchData={matchData} setMatchData={setMatchData} branding={branding}/> */}
             <RallyControllerWConfig matchData={matchData} setMatchData={setMatchData} setGameData={setGameData} gameData={gameData} branding={branding} handleGameStatusChange={handleGameStatusChange} />
