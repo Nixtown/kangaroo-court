@@ -26,37 +26,41 @@ import Link from "next/link";
 function EditMatch({matchData}) {
   return (
     <Card id="delete-account">
-      <MDBox
-        pr={3}
-        display="flex"
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", sm: "center" }}
-        flexDirection={{ xs: "column", sm: "row" }}
-      >
-        <MDBox p={3} lineHeight={1}>
-          <MDBox mb={1}>
-            <MDTypography variant="h5">Modify Match</MDTypography>
-          </MDBox>
-          <MDTypography variant="button" color="text">
-          Manage match settings or review game details.
-          </MDTypography>
-        </MDBox>
-        <MDBox display="flex" flexDirection={{ xs: "column", sm: "row" }}>
-        <Link href={`/app/view-games/edit/${matchData.id}`} passHref>
-          <MDButton variant="outlined" color="secondary">
-            Edit
-          </MDButton>
-        </Link>
-          <MDBox ml={{ xs: 0, sm: 1 }} mt={{ xs: 1, sm: 0 }}>
-          <Link href={`/app/matches/${matchData.event_id}`} passHref>
-            <MDButton variant="gradient" color="dark" sx={{ height: "100%" }}>
-              Matches
-            </MDButton>
-          </Link>
-          </MDBox>
-        </MDBox>
-      </MDBox>
-    </Card>
+  <MDBox
+    p={2}
+    display="flex"
+    flexDirection={{ xs: "column", sm: "row" }}
+    alignItems="center"
+    justifyContent="space-between"
+  >
+    <MDBox mb={{ xs: 2, sm: 0 }}>
+      <MDTypography variant="h5" mb={1}>
+        Modify Match
+      </MDTypography>
+      <MDTypography variant="body2" color="text">
+        Manage match settings or review game details.
+      </MDTypography>
+    </MDBox>
+    <MDBox
+      display="flex"
+      flexDirection={{ xs: "column", sm: "row" }}
+      gap={{ xs: 1, sm: 2 }}
+      width={{ xs: "100%", sm: "auto" }}
+    >
+      <Link href={`/app/view-games/edit/${matchData.id}`} passHref>
+        <MDButton variant="outlined" color="secondary" fullWidth>
+          Edit
+        </MDButton>
+      </Link>
+      <Link href={`/app/matches/${matchData.event_id}`} passHref>
+        <MDButton variant="gradient" color="dark" fullWidth>
+          Matches
+        </MDButton>
+      </Link>
+    </MDBox>
+  </MDBox>
+</Card>
+
   );
 }
 

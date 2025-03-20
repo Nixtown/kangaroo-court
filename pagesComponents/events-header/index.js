@@ -83,47 +83,43 @@ function EventsHeader({ children }) {
 
 
   return (
-    <MDBox position="relative" mb={5}>
-      <MDBox
-        display="flex"
-        alignItems="center"
-        position="relative"
-        minHeight="10rem"
-        borderRadius="xl"
-        sx={{
-          backgroundImage: ({
-            functions: { rgba, linearGradient },
-            palette: { gradients },
-          }) =>
-            `${linearGradient(
-              rgba(gradients.info.main, 0.6),
-              rgba(gradients.info.state, 0.6)
-            )}, url(${backgroundImage.src})`,
-          backgroundSize: "cover",
-          backgroundPosition: "50%",
-          overflow: "hidden",
-        }}
-      />
-      <Card
-        sx={{
-          position: "relative",
-          mt: -8,
-          mx: 3,
-          py: 2,
-          px: 2,
-        }}
-      >
-        <Grid container spacing={3} alignItems="center">
-          <Grid item>
-          {branding ? (
+<MDBox position="relative" mb={3}>
+  <MDBox
+    display="flex"
+    alignItems="center"
+    position="relative"
+    minHeight="10rem"
+    borderRadius="xl"
+    sx={({ functions: { rgba, linearGradient }, palette: { gradients } }) => ({
+      backgroundImage: `${linearGradient(
+        rgba(gradients.info.main, 0.6),
+        rgba(gradients.info.state, 0.6)
+      )}, url(${backgroundImage.src})`,
+      backgroundSize: "cover",
+      backgroundPosition: "50%",
+      overflow: "hidden",
+    })}
+  />
+  <Card
+    sx={{
+      position: "relative",
+      mt: { xs: -15, sm: -8 },
+      mx: { xs: 1, sm: 3 },
+      py: 2,
+      px: 2,
+    }}
+  >
+    <Grid container spacing={2} alignItems="center" wrap="wrap">
+      <Grid item>
+        {branding ? (
           <Avatar
             src={branding.logo_url}
             alt="Logo"
             sx={{
               boxSizing: "border-box",
               bgcolor: branding.primary_color,
-              width: "100px",
-              height: "100px",
+              width: { xs: "60px", sm: "100px" },
+              height: { xs: "60px", sm: "100px" },
               borderRadius: "50%",
               border: "3px solid",
               borderColor: branding.primary_color,
@@ -133,46 +129,55 @@ function EventsHeader({ children }) {
                   : "none",
               transition: "all 0.3s ease-in-out",
             }}
-            imgProps={{ style: { objectFit: "contain", width: "100%", height: "100%", padding: "8px" } }}
+            imgProps={{
+              style: {
+                objectFit: "contain",
+                width: "100%",
+                height: "100%",
+                padding: "8px",
+              },
+            }}
           />
         ) : (
-          // Fallback Avatar until branding loads
           <Avatar
             src={defaultLogo}
             alt="Logo"
             sx={{
-              width: "100px",
-              height: "100px",
+              width: { xs: "60px", sm: "100px" },
+              height: { xs: "60px", sm: "100px" },
               borderRadius: "50%",
               border: "3px solid black",
             }}
           />
         )}
-          </Grid>
-          <Grid item>
-            <MDBox height="100%" mt={0.5} lineHeight={1}>
-             
-              <MDTypography variant="h4" color="dark" fontWeight="bold">
-                All Events
-              </MDTypography>
-              <MDTypography variant="subtitle2" color="text"  sx={{ fontWeight: "regular" }}>
-                View and manage your current events in real-time.
-              </MDTypography>
-            </MDBox>
-          </Grid>
-          <Grid item sx={{ ml: "auto" }}>
-          <Link href="/app/create-event" passHref>
-            <MDButton variant="outlined" color="dark" startIcon={<AddIcon />}>
-              Create Event
-            </MDButton>
-          </Link>
-          </Grid>
-        </Grid>
-        {children}
-  
-      </Card>
- 
-    </MDBox>
+      </Grid>
+      <Grid item xs zeroMinWidth>
+        <MDBox ml={2}>
+          <MDTypography
+            variant="h4"
+            color="dark"
+            fontWeight="bold"
+          >
+            All Events
+          </MDTypography>
+          <MDTypography variant="subtitle2" color="text">
+            View and manage your current events in real-time.
+          </MDTypography>
+        </MDBox>
+      </Grid>
+      <Grid item xs={12} sm="auto">
+        <Link href="/app/create-event" passHref>
+          <MDButton variant="outlined" color="dark" fullWidth>
+            Create Event
+          </MDButton>
+        </Link>
+      </Grid>
+    </Grid>
+    {children}
+  </Card>
+</MDBox>
+
+
   );
 }
 

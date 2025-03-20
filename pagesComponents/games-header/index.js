@@ -139,7 +139,7 @@ function GamesHeader({ children }) {
   
 
   return (
-    <MDBox position="relative" mb={5}>
+    <MDBox position="relative" mb={3}>
       <MDBox
         display="flex"
         alignItems="center"
