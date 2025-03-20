@@ -18,6 +18,8 @@ import { toast } from "react-toastify";
 
 const CreateMatch = () => {
   const router = useRouter();
+  const { event_id } = router.query; // get event id from URL query
+
 
   // Default match settings
   const defaultMatchData = {
@@ -200,7 +202,7 @@ const CreateMatch = () => {
     }
 
     // Merge user_id into matchData
-    const matchDataWithUser = { ...matchData, user_id: user.id };
+    const matchDataWithUser = { ...matchData, user_id: user.id, event_id: event_id  };
 
     // Insert new match into 'matches'
     const { data, error } = await supabase

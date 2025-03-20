@@ -48,7 +48,7 @@ function EditMatch({matchData}) {
           </MDButton>
         </Link>
           <MDBox ml={{ xs: 0, sm: 1 }} mt={{ xs: 1, sm: 0 }}>
-          <Link href={`/app/matches`} passHref>
+          <Link href={`/app/matches/${matchData.event_id}`} passHref>
             <MDButton variant="gradient" color="dark" sx={{ height: "100%" }}>
               Matches
             </MDButton>

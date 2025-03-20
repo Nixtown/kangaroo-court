@@ -24,15 +24,12 @@ import MDButton from "/components/MDButton";
 import AddIcon from "@mui/icons-material/Add";
 
 
-function MatchesHeader({ children }) {
+function EventsHeader({ children }) {
   const [tabsOrientation, setTabsOrientation] = useState("horizontal");
   const [tabValue, setTabValue] = useState(0);
   const [matchData, setMatchData] = useState(null);
   const [branding, setBranding] = useState(null);
-  const [eventInfo, setEventInfo] = useState(null); // New state for event information
   const router = useRouter();
-  const { event_id } = router.query; // get event id from URL query
-
 
 
 
@@ -58,24 +55,6 @@ function MatchesHeader({ children }) {
     handleTabsOrientation();
     return () => window.removeEventListener("resize", handleTabsOrientation);
   }, []);
-
-    // Fetch event information from Supabase using event_id
-    useEffect(() => {
-      if (!event_id) return;
-      const fetchEventInfo = async () => {
-        const { data, error } = await supabase
-          .from("events")
-          .select("*")
-          .eq("id", event_id)
-          .maybeSingle();
-        if (error) {
-          console.error("Error fetching event information:", error);
-        } else {
-          setEventInfo(data);
-        }
-      };
-      fetchEventInfo();
-    }, [event_id]);
 
 
 
@@ -174,17 +153,17 @@ function MatchesHeader({ children }) {
             <MDBox height="100%" mt={0.5} lineHeight={1}>
              
               <MDTypography variant="h4" color="dark" fontWeight="bold">
-                {eventInfo ? eventInfo.name : "Event Name"}
+                All Events
               </MDTypography>
               <MDTypography variant="subtitle2" color="text"  sx={{ fontWeight: "regular" }}>
-                View and manage your current matches in real-time.
+                View and manage your current events in real-time.
               </MDTypography>
             </MDBox>
           </Grid>
           <Grid item sx={{ ml: "auto" }}>
-          <Link href={`/app/create-match/${event_id}`} passHref>
+          <Link href="/app/create-event" passHref>
             <MDButton variant="outlined" color="dark" startIcon={<AddIcon />}>
-              Create Match
+              Create Event
             </MDButton>
           </Link>
           </Grid>
@@ -197,12 +176,12 @@ function MatchesHeader({ children }) {
   );
 }
 
-MatchesHeader.defaultProps = {
+EventsHeader.defaultProps = {
   children: "",
 };
 
-MatchesHeader.propTypes = {
+EventsHeader.propTypes = {
   children: PropTypes.node,
 };
 
-export default MatchesHeader;
+export default EventsHeader;

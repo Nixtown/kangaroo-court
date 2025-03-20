@@ -288,14 +288,14 @@ const routes = [
     icon: <Icon fontSize="medium">folder</Icon>,
     collapse: [
       {
-        name: "Create Match",
-        key: "create-match",
-        route: "/app/create-match",
+        name: "Create Event",
+        key: "create-event",
+        route: "/app/create-event",
       },
       {
-        name: "Matches",
-        key: "matches",
-        route: "/app/matches",
+        name: "Events",
+        key: "events",
+        route: "/app/events",
       },
     ],
   },

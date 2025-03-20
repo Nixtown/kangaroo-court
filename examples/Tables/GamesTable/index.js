@@ -251,7 +251,7 @@ const handleDeleteSelected = async () => {
           }}
         >
           {/* Back Button (Left) */}
-          <IconButton onClick={() => router.push("/app/matches")}>
+          <IconButton onClick={() => router.push(`/app/matches/${matchData.event_id}`)}>
             <Icon>arrow_back</Icon>
           </IconButton>
 
