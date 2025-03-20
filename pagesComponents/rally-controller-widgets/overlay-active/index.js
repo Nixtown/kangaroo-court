@@ -97,7 +97,7 @@ function OverlayActive({setMatchData, matchData }) {
                   >
                     videocamera
                   </Icon>
-          <MDTypography variant="body2">
+          <MDTypography variant="h6" fontWeight="bold" align="center">
             {matchData?.active_match  ? "OBS Active" : "OBS Off"}
           </MDTypography>
           

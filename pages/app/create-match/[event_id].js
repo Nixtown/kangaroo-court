@@ -45,6 +45,7 @@ const CreateMatch = () => {
     win_on_serve: false,
     point_cap: 0,
     game_title: "Open Doubles",
+    status: "Not Started"
   }), []);
 
   // State for game settings; initialize based on defaultMatchData.best_of
@@ -228,6 +229,7 @@ const CreateMatch = () => {
         point_cap: game.point_cap,
         server: 2, // default server
         game_title: game.game_title,
+        status: "Not Started"
       }));
       // Insert gameData
       const { data: gameResponse, error: gameError } = await supabase

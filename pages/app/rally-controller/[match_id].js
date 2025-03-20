@@ -18,6 +18,7 @@ import Grid from "@mui/material/Grid";
 import DashboardLayout from "/examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "/examples/Navbars/DashboardNavbar";
 import MatchTimer from "/pagesComponents/rally-controller-widgets/match-timer";
+import GameTimer from "/pagesComponents/rally-controller-widgets/game-timer";
 import { useRouter } from "next/router";
 import Icon from "@mui/material/Icon";
 import { useMediaQuery } from '@mui/material';
@@ -26,6 +27,8 @@ import Card from "@mui/material/Card";
 import MDButton from "/components/MDButton";
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Button } from "@mui/material";
 import Link from "next/link";
+import { toast } from "react-toastify";
+
 
 
 
@@ -40,6 +43,8 @@ import BasicScoreBoard from "/pagesComponents/scoreboard/basic-scoreboard";
 import EditMatch from "../../../pagesComponents/rally-controller-widgets/edit-match";
 import GamesTable from "../../../examples/Tables/GamesTable";
 import CycleServers from "../../../pagesComponents/rally-controller-widgets/cycle-servers";
+import CycleGame from "../../../pagesComponents/rally-controller-widgets/cycle-game";
+
 
 
 const RallyControllerDash = () => {
@@ -63,7 +68,6 @@ const RallyControllerDash = () => {
   const isSmallScreen = useMediaQuery('(max-width:850px)');
   const routeChangeHandlerRef = useRef();
 
-  const currentGame = gameData?.[matchData?.current_game - 1] || {}; // Ensures currentGame is always an object
 
 
   useEffect(() => {
@@ -201,9 +205,10 @@ useEffect(() => {
     const fetchGameStats = async () => {
       if (matchData && matchData.id) {
         const { data, error } = await supabase
-          .from('game_stats')
-          .select('*')
-          .eq('match_id', matchData.id);
+        .from('game_stats')
+        .select('*')
+        .eq('match_id', matchData.id)
+        .order('game_number', { ascending: true });
           
         if (error) {
           console.error("Error fetching game stats:", error);
@@ -217,7 +222,100 @@ useEffect(() => {
   }, [matchData]);
 
 
+  useEffect(() => {
+    if (!gameData || !Array.isArray(gameData)) return;
+    const currentGame = gameData.find(
+      (game) => game.game_number === matchData.current_game
+    );
+    if (currentGame && currentGame.game_completed && currentGame.status === "In Progress") {
+      handleGameStatusChange();
+    }
+  }, [gameData, matchData.current_game]);
   
+
+  const handleGameStatusChange = async () => {
+    // Recalculate current game and its index from the latest state.
+    const currentGame = gameData.find(
+      (game) => game.game_number === matchData.current_game
+    ) || null;
+    
+    const currentGameIndex = gameData.findIndex(
+      (game) => game.game_number === matchData.current_game
+    );
+    
+    console.log("handleGameStatusChange triggered");
+    console.log("Current Game:", currentGame);
+    console.log("Current Game Index:", currentGameIndex);
+    console.log(
+      "Current Score: Team A:",
+      currentGame?.team_a_score,
+      "Team B:",
+      currentGame?.team_b_score
+    );
+    // If no duration, default it to 0
+    const currentDuration = currentGame?.duration ?? 0;
+    console.log("Current Duration:", currentDuration);
+  
+    if (!currentGame || currentGameIndex === -1) return;
+  
+    let newStatus;
+    if (currentGame.status === "Not Started") {
+      newStatus = "In Progress";
+      const newStartTime = new Date().toISOString();
+  
+      const { error } = await supabase
+        .from("game_stats")
+        .update({ status: newStatus, start_time: newStartTime })
+        .eq("id", currentGame.id);
+      if (error) {
+        console.error("Error updating game status:", error);
+        toast.error("Error updating game status.");
+        return;
+      }
+      // Update local state with the new start time and status.
+      const updatedGame = { ...currentGame, status: newStatus, start_time: newStartTime };
+      const newGameData = [...gameData];
+      newGameData[currentGameIndex] = updatedGame;
+      setGameData(newGameData);
+      console.log("Game updated to In Progress:", updatedGame);
+      toast.success(`Game started at ${newStartTime}`);
+    } else if (currentGame.status === "In Progress") {
+      newStatus = "Completed";
+      const elapsedDuration = Date.now() - new Date(currentGame.start_time).getTime();
+      const elapsedSeconds = Math.floor(elapsedDuration / 1000);
+      const { error } = await supabase
+        .from("game_stats")
+        .update({ status: newStatus, duration: elapsedSeconds })
+        .eq("id", currentGame.id);
+      if (error) {
+        console.error("Error updating game status:", error);
+        toast.error("Error updating game status.");
+        return;
+      }
+      // Update local state with new duration and status.
+      const updatedGame = { ...currentGame, status: newStatus, duration: elapsedSeconds };
+      const newGameData = [...gameData];
+      newGameData[currentGameIndex] = updatedGame;
+      setGameData(newGameData);
+      console.log("Game updated to Completed:", updatedGame);
+      toast.success(`Game completed with duration ${formatTime(elapsedSeconds)}`);
+    }
+  };
+  
+  
+  
+
+  
+  // Convert seconds to HH:MM:SS format.
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  
+
   return (
     <DashboardLayout>
       <DashboardNavbar />
@@ -248,24 +346,49 @@ useEffect(() => {
             
             
             {/* <RallyControllerHeader matchData={matchData} setMatchData={setMatchData} branding={branding}/> */}
-            <RallyControllerWConfig matchData={matchData} setMatchData={setMatchData} setGameData={setGameData} gameData={gameData} branding={branding} />
+            <RallyControllerWConfig matchData={matchData} setMatchData={setMatchData} setGameData={setGameData} gameData={gameData} branding={branding} handleGameStatusChange={handleGameStatusChange} />
          </Grid>
           <Grid item xs={12} lg={4}>
-            <MatchTimer
-              title={{ text: "Match Timer" }}
-              icon={{ color: "dark", component: "timer" }}
-              direction="right"
-              matchData={matchData}
-              setMatchData={setMatchData}
-            />
+            <Grid item xs={12} lg={12}>
+              <MDBox sx={{marginBottom: "24px"}}>
+              <MatchTimer
+                title={{ text: "Match Timer" }}
+                icon={{ color: "dark", component: "timer" }}
+                direction="right"
+                matchData={matchData}
+                setMatchData={setMatchData}
+                gameData={gameData}
+              />
+              </MDBox>
+            </Grid>
+            <Grid item xs={12} lg={12}>
+              <GameTimer
+                title={{ text: "Game Timer" }}
+                icon={{ color: "dark", component: "timer" }}
+                direction="right"
+                matchData={matchData}
+                setMatchData={setMatchData}
+                gameData={gameData}
+                setGameData={setGameData}
+                handleGameStatusChange={handleGameStatusChange}
+              />
+            </Grid>
             <Grid container spacing={3}>
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={12} lg={12}>
                 <OverlayActive
                 setMatchData={setMatchData}
                 matchData={matchData}
               />
               </Grid>
-              <Grid item xs={12} lg={6}>
+              <Grid item xs={12} lg={12}>
+              <CycleGame
+                setMatchData={setMatchData}
+                matchData={matchData}
+                setGameData={setGameData} 
+                gameData={gameData}
+              />
+              </Grid>
+              <Grid item xs={12} lg={12}>
               <CycleServers
                 setMatchData={setMatchData}
                 matchData={matchData}

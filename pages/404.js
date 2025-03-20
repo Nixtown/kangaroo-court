@@ -14,7 +14,7 @@ import Router from "next/router";
 
 export default function Custom404() {
   useEffect(() => {
-    Router.push("/app/matches");
+    Router.push("/app/events");
   });
 
   return <div />;

@@ -39,13 +39,23 @@ function MatchTimer({
   icon,
   direction,
   matchData,
-  setMatchData
+  setMatchData,
+  gameData,
 }) {
   const [controller] = useMaterialUIController();
   const { darkMode } = controller;
   const [startTime, setStartTime] = useState(null);
   const [timerActive, setTimerActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
+
+
+    // Helper: get the current game by matching game_number with matchData.current_game
+    const getCurrentGame = (matchData, gameData) => {
+      if (matchData && gameData) {
+        return gameData.find((game) => game.game_number === matchData.current_game) || null;
+      }
+      return null;
+    };
 
   
   // Resume timer if match is in progress.
@@ -182,25 +192,30 @@ const handleMatchStatusChange = async () => {
           
           {/* Button First */}
           <Grid item xs={4} display="flex" justifyContent="flex-start">
-              <MDButton
-              variant="outlined"
-              color={
-                matchData?.status === "Not Started"
-                  ? "success"
-                  : matchData?.status === "In Progress"
-                  ? "error"
-                  : "success"
-              }
-              sx={{ mr: 2 }}
-              onClick={handleMatchStatusChange}
-              disabled={matchData?.status === "Completed"}
-            >
-              {matchData?.status === "Not Started"
-                ? "Start"
-                : matchData?.status === "In Progress"
-                ? "Complete"
-                : "Completed"}
-            </MDButton>
+          <MDButton
+  variant="outlined"
+  color={
+    matchData?.status === "Not Started"
+      ? "success"
+      : matchData?.status === "In Progress"
+      ? "error"
+      : "success"
+  }
+  sx={{ mr: 2 }}
+  onClick={handleMatchStatusChange}
+  disabled={
+    getCurrentGame(matchData, gameData)?.status === "In Progress" ||
+    matchData?.status === "Completed"
+  }
+>
+  {matchData?.status === "Not Started"
+    ? "Start"
+    : matchData?.status === "In Progress"
+    ? "Complete"
+    : "Completed"}
+</MDButton>
+
+
           </Grid>
   
           {/* Timer in the Middle */}

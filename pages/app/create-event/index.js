@@ -17,7 +17,7 @@ const CreateEvent = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Get the authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -25,27 +25,27 @@ const CreateEvent = () => {
       toast.error("User not authenticated");
       return;
     }
-
+  
     // Insert the new event into the events table.
     const { data, error } = await supabase
       .from("events")
       .insert({ name: eventName, user_id: user.id })
       .select();
-
+  
     if (error) {
       console.error("Error creating event:", error);
       toast.error("Error creating event");
       return;
     }
-
+  
     if (data && data.length > 0) {
       const eventId = data[0].id;
       toast.success("Event created successfully");
-      // Redirect to matches page using the new event id.
-      // router.push(`/app/matches/${eventId}`);
-      router.push(`/app/matches/`);
+      // Navigate using the newly created event's id.
+      router.push(`/app/matches/${eventId}`);
     }
   };
+  
 
   return (
     <DashboardLayout>

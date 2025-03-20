@@ -34,6 +34,21 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
   const games = gameData
 
 
+  const formatDuration = (seconds) => {
+    if (seconds == null) return "N/A";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hrs > 0) {
+      // If hours exist, pad minutes and seconds to two digits
+      return `${hrs}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    } else {
+      // Otherwise, just display minutes and seconds
+      return `${mins}:${secs.toString().padStart(2, "0")}`;
+    }
+  };
+
+
   // Define columns for the games table.
   const columns = useMemo(() => [
     {
@@ -79,17 +94,14 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
       ),
     },
     {
-      Header: "Completed",
-      accessor: "game_completed",
-      Cell: ({ value }) => (
-        <DataTableBodyCell>
-          {value ? (
-            <Icon sx={{ color: "green" }}>done</Icon>
-          ) : (
-            <Icon sx={{ color: "red" }}>close</Icon>
-          )}
-        </DataTableBodyCell>
-      ),
+      Header: "Duration",
+      accessor: "duration",
+      Cell: ({ value }) => <DataTableBodyCell>{formatDuration(value)}</DataTableBodyCell>,
+    },
+    {
+      Header: "Status",
+      accessor: "status",
+      Cell: ({ value }) => <DataTableBodyCell>{value || "N/A"}</DataTableBodyCell>,
     },
   ], [matchData]);
 
@@ -105,6 +117,8 @@ function GamesTable({ entriesPerPage, canSearch, showTotalEntries, pagination, i
           game_completed: game.game_completed,
           scoring_type: game.scoring_type,
           side_out_count: game.side_out_count,
+          status: game.status,
+          duration: game.duration
         }))
       : [],
     [games]

@@ -152,7 +152,7 @@ function Cover() {
 
 
     toast.success("Check your email for a confirmation link!");
-    router.push("/app/create-match"); // Redirect after sign up
+    router.push("/app/events"); // Redirect after sign up
   };
 
   return (

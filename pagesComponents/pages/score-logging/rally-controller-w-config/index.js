@@ -20,7 +20,8 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import MDInput from "/components/MDInput";
 
 
-const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData, branding}) => {
+const RallyControllerWConfig = ({ matchData, setGameData, gameData, branding, handleGameStatusChange}) => {
+
 
 
 
@@ -34,7 +35,7 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
     if (error) {
       console.error("Error updating game stats:", error);
     } else {
-      // console.log("Game stats updated successfully:", data);
+
     }
   };
 
@@ -58,55 +59,34 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
   };
   
 
-  const handleChangeGame = async (delta) => {
-    // Calculate the new game number
-    const newGameNumber = matchData.current_game + delta;
   
-    // Check boundaries: ensure it doesn't go below 1 or above best_of
-    if (newGameNumber < 1 || newGameNumber > matchData.best_of) {
-      console.log("Game number out of bounds.");
-      return;
-    }
-  
-    // Only update if there's an actual change
-    if (newGameNumber !== matchData.current_game) {
-      const { data, error } = await supabase
-        .from('matches')
-        .update({ current_game: newGameNumber })
-        .eq('id', matchData.id);
-  
-      if (error) {
-        console.error("Error updating match current_game:", error);
-      } else {
-        setMatchData(prev => ({ ...prev, current_game: newGameNumber }));
-      }
-    }
-  };
-  
-  const handleRally = (rallyWon) => {
+  const handleRally = async (rallyWon) => {
     // Determine the current game index from matchData (assuming current_game is 1-indexed)
-
     const currentGameIndex = matchData.current_game - 1;
     
-    // Get the current game object
+    // Get the current game object from gameData (note: this may be unordered)
     const currentGame = gameData[currentGameIndex];
     
     // Determine the serving team using your helper function
     const servingTeam = getServingTeam(currentGame);
+    
     // Determine the rally winner based on whether the rally was won
     const rallyWinner = rallyWon 
       ? servingTeam 
       : (servingTeam === "TeamA" ? "TeamB" : "TeamA");
     
-    // Call the rallyController with the determined rally winner
+    // Call the rallyController with the determined rally winner; 
+    // this function returns the updated gameData array.
     const updatedGameData = rallyController(gameData, matchData, rallyWinner, servingTeam);
     
-    // Update the gameData state with the new data.
+    // Wait for Supabase to update with the new game data.
+    await updateGameDataInSupabase(updatedGameData);
+    
+    // Update state with the new game data.
     setGameData(updatedGameData);
-
-    // Update Supabase with the new game data
-    updateGameDataInSupabase(updatedGameData);
+  
   };
+  
     
     
   function rallyController(gameData, matchData, rallyWinner, servingTeam) {
@@ -395,6 +375,7 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
         theme: "dark",
         style: { width: "100%", maxWidth: "500px" },
       });
+
     }
     
     return game;
@@ -471,24 +452,11 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
             </Grid>
             
             <Grid container justifyContent="center" alignItems="center" spacing={2} sx={{ width: "100%" }}>
-  
-  {/* Previous Game (Left Arrow) */}
-  <Grid item xs="auto">
-    <MDButton
-      sx={{ height: "125px", width: "50px", minWidth: "50px" }}
-      variant="gradient"
-      color="dark"
-      fullWidth
-      disabled={matchData.current_game === 1}
-      onClick={() => handleChangeGame(-1)}
-    >
-      ←
-    </MDButton>
-  </Grid>
+
 
   {/* Won Rally & Lost Rally (Expands to Fill Space) */}
   <Grid item xs>
-    <ButtonGroup variant="outlined" sx={{ height: "125px", width: "100%" }} aria-label="Basic button group">
+    <ButtonGroup variant="outlined" sx={{ height: "400px", width: "100%" }} aria-label="Basic button group">
       {/* Won Rally */}
       <MDButton
         variant="contained"
@@ -503,10 +471,10 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
         fullWidth
         size="large"
         disabled={
-          gameData[matchData.current_game - 1] 
-            ? gameData[matchData.current_game - 1].game_completed === true 
-            : true
+          !gameData[matchData.current_game - 1] ||
+          gameData[matchData.current_game - 1].status !== "In Progress"
         }
+        
         onClick={() => handleRally(true)}
       >
         Won <br/> Rally
@@ -519,29 +487,15 @@ const RallyControllerWConfig = ({setMatchData, matchData, setGameData, gameData,
         fullWidth
         size="large"
         disabled={
-          gameData[matchData.current_game - 1] 
-            ? gameData[matchData.current_game - 1].game_completed === true 
-            : true
+          !gameData[matchData.current_game - 1] ||
+          gameData[matchData.current_game - 1].status !== "In Progress"
         }
+        
         onClick={() => handleRally(false)}
       >
         Lost <br/> Rally
       </MDButton>
     </ButtonGroup>
-  </Grid>
-
-  {/* Next Game (Right Arrow) */}
-  <Grid item xs="auto">
-    <MDButton
-      sx={{ height: "125px", width: "50px", minWidth: "50px" }}
-      variant="gradient"
-      color="dark"
-      fullWidth
-      disabled={matchData.current_game === matchData.best_of}
-      onClick={() => handleChangeGame(+1)}
-    >
-      →
-    </MDButton>
   </Grid>
 
 </Grid>

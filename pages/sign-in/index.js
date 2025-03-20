@@ -60,7 +60,7 @@ function Basic() {
     }
 
     // ✅ Redirect after successful login
-    router.push("/app/matches");
+    router.push("/app/events");
   };
 
 
