@@ -186,6 +186,7 @@ const EditMatch = () => {
     point_cap: game.point_cap,
     server: 2, // default server
     game_title: game.game_title,
+    status: game.status,
     }));
 
     // Insert or update the game data in 'game_stats'
