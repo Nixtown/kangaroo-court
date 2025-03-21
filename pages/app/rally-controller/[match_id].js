@@ -377,6 +377,7 @@ useEffect(() => {
               </MDBox>
             </Grid>
             <Grid item xs={12} lg={12}>
+            <MDBox sx={{marginBottom: "24px"}}>
               <GameTimer
                 title={{ text: "Game Timer" }}
                 icon={{ color: "dark", component: "timer" }}
@@ -387,33 +388,40 @@ useEffect(() => {
                 setGameData={setGameData}
                 handleGameStatusChange={handleGameStatusChange}
               />
+            </MDBox>
             </Grid>
-            <Grid container spacing={3}>
+            <Grid container spacing={0}>
               <Grid item xs={12} lg={12}>
+              <MDBox sx={{marginBottom: "24px"}}>
                 <OverlayActive
                 setMatchData={setMatchData}
                 matchData={matchData}
               />
+              </MDBox>
               </Grid>
               <Grid item xs={12} lg={12}>
+              <MDBox sx={{marginBottom: "24px"}}>
               <CycleGame
                 setMatchData={setMatchData}
                 matchData={matchData}
                 setGameData={setGameData} 
                 gameData={gameData}
               />
+              </MDBox>
               </Grid>
               <Grid item xs={12} lg={12}>
+              <MDBox sx={{marginBottom: "24px"}}>
               <CycleServers
                 setMatchData={setMatchData}
                 matchData={matchData}
                 setGameData={setGameData} 
                 gameData={gameData}
               />
+              </MDBox>
               </Grid>
 
             </Grid>
-            <MDBox sx={{marginTop: "24px"}}>
+            <MDBox sx={{marginBottom: "24px"}}>
             <EditMatch 
               setMatchData={setMatchData}
               matchData={matchData}
@@ -421,7 +429,7 @@ useEffect(() => {
             </MDBox>         
           </Grid> 
         </Grid>
-        <Card sx={{marginTop: "24px"}}> 
+        <Card> 
         <GamesTable entriesPerPage={false} setMatchData={setMatchData} matchData={matchData} gameData={gameData}/>
       </Card>
 

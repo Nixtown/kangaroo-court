@@ -86,7 +86,7 @@ function CycleServers({ setMatchData, matchData, setGameData, gameData }) {
   };
 
   return (
-    <Card sx={{ overflow: "hidden", marginTop: "24px" }}>
+    <Card sx={{ overflow: "hidden"}}>
       <MDBox
         p={3}
         variant="gradient"

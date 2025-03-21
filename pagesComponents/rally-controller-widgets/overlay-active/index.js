@@ -72,7 +72,7 @@ function OverlayActive({setMatchData, matchData }) {
   };
 
   return (
-    <Card sx={{overflow: "hidden", marginTop: "24px" }}>
+    <Card sx={{overflow: "hidden"}}>
       <MDBox
         p={3}
         // bgColor={matchData?.active_match  ? "dark" : "white"}
@@ -88,7 +88,6 @@ function OverlayActive({setMatchData, matchData }) {
           display="flex"
           justifyContent="space-between"
           alignItems="center"
-          mb= "4px"
           lineHeight={1}
         >
              <Icon
@@ -101,7 +100,7 @@ function OverlayActive({setMatchData, matchData }) {
             {matchData?.active_match  ? "OBS Active" : "OBS Off"}
           </MDTypography>
           
-          <MDBox mt={-0.5} mr={-1.5}>
+          <MDBox mr={-1.5}>
             <Switch
                           checked={matchData?.active_match || false}
                           onChange={(e) => {
